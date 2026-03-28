@@ -60,7 +60,7 @@ const navLinks = [
         }
       </div>
       <Link className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-2 transition-all duration-400 ml-auto" 
-      href={"/Components/Sign-In.jsx"}><p className="max-md:hidden text-white">Sign In</p> <PiUser className="max-md:text-2xl text-lg text-white"/></Link>
+      href={"/sign-in/Sign-In.jsx"}><p className="max-md:hidden text-white">Sign In</p><PiUser className="max-md:text-2xl text-lg text-white"/></Link>
       
       <button onClick={() => setNavOpen(!navOpen)} className="text-2xl md:hidden ml-5 z-100">
         {
