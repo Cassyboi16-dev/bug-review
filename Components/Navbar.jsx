@@ -1,74 +1,139 @@
 "use client";
-import Link from "next/link"
-import Image from 'next/image'
+import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-export default function Navbar () {
-  const [navOpen, setNavOpen] = useState(false)
-const navLinks = [
-   {
-    label: "Home",
-    url: "/home"
-  },
-  {
-    label: "About Us",
-    url: "/about"
-  },
-  {
-    label: "Explore",
-    url: "/expore"
-  },
-  {
-    label: "Notifications",
-    url: "/notifications"
-  },
-  {
-    label: "Code Reviews",
-    url: "/code-reviews"
-  },
-]
+
+export default function Navbar() {
+  const [navOpen, setNavOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const mainLinks = [
+    { label: "Home", url: "/home" },
+    { label: "Explore", url: "/explore" },
+    { label: "Code Reviews", url: "/code-reviews" },
+  ];
+
+  const extraLinks = [
+    { label: "About Us", url: "/about" },
+    { label: "Notifications", url: "/notifications" },
+  ];
+
   return (
-    <main className="flex items-center justify-evenly md:px-10 md:py-4 p-3 bg-gradient-to-r from-slate-900 to-slate-950 shadow-md border-b-2">
-      <Link href={"/"} className="flex items-center justify-around gap-2 z-50">
+    <main className="flex items-center justify-between px-4 md:px-6 lg:px-10 py-3 md:py-4 relative z-50 bg-gradient-to-r from-slate-900 to-slate-950 shadow-md border-b-2">
+
+      {/* Logo */}
+      <Link href="/" className="flex items-center gap-2 z-50">
         <Image
-          src={"/bug.png"}
+          src="/bug.png"
           alt="logo"
-          width={800}
-          height={800}
-          className="w-15 h-15 border-2 bg-emerald-400 rounded-4xl shadow-md"       
+          width={45}
+          height={45}
+          className="border-2 bg-emerald-400 rounded-xl shadow-md"
         />
-        <p className="font-bold text-emerald-300 text-2xl italic">BugReview</p>
+        <p className="font-bold text-emerald-300 text-lg md:text-xl lg:text-2xl italic">
+          BugReview
+        </p>
       </Link>
 
-      {/* Tablet and Desktop Nav */}
-      <div className="flex items-center gap-7 ml-auto px-10 max-md:hidden">
-        {
-          navLinks.map((content, index) => (
-            <Link href={"#"} key={index} className="border-0.9 p-5 hover:text-emerald-300 rounded-4xl transition-colors duration-400 text-white font-bold">{content.label}</Link>
+      {/* Tablet + Desktop Nav */}
+      <div className="hidden md:flex items-center gap-4 lg:gap-6 relative">
 
-          ))
-        }
+        {/* Main links */}
+        {mainLinks.map((item, index) => (
+          <Link
+            key={index}
+            href={item.url}
+            className="text-white font-medium lg:font-semibold text-sm lg:text-base hover:text-emerald-300 transition"
+          >
+            {item.label}
+          </Link>
+        ))}
+
+        {/* More dropdown (ONLY on tablet) */}
+        <div className="relative hidden md:block lg:hidden">
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className="text-white text-sm hover:text-emerald-300"
+          >
+            More
+          </button>
+
+          {moreOpen && (
+            <div className="absolute top-8 right-0 bg-slate-900 shadow-lg rounded-xl p-3 flex flex-col gap-2">
+              {extraLinks.map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.url}
+                  className="text-white text-sm hover:text-emerald-400"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Show ALL links on large screens */}
+        <div className="hidden lg:flex gap-6">
+          {extraLinks.map((item, index) => (
+            <Link
+              key={index}
+              href={item.url}
+              className="text-white font-semibold hover:text-emerald-300"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
       </div>
-       {/* Mobile nav */}
-      <div className={`bg-slate-950 h-96 w-full md:hidden absolute top-0 left-0 items-center flex-col pt-10 gap-10 rounded-b-3xl shadow-md text-emerald-400 z-100 ${navOpen ? "flex" : "hidden"}`}> 
-        {
-          navLinks.map((item, index) => (
-            <Link key={index} href={"#"} className="hover:text-emerald-400 transition-colors duration-200">{item.label}</Link>
-          ))
-        }
-      </div>
-      <Link className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-2 transition-all duration-400 ml-auto" 
-      href={"/sign-in/Sign-In.jsx"}><p className="max-md:hidden text-white">Sign In</p><PiUser className="max-md:text-2xl text-lg text-white"/></Link>
-      
-      <button onClick={() => setNavOpen(!navOpen)} className="text-2xl md:hidden ml-5 z-100">
-        {
-          navOpen ? <IoMdClose className="text-white hover:text-emerald-400"/> : <TbMenu className="text-white hover:text-emerald-400"/>
-        }
-        
-        
+
+      {/* Right Side */}
+      <div className="flex items-center gap-3 md:gap-4">
+
+        {/* Sign In */}
+        <Link
+          href="#"
+          className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
+        >
+          <p className="hidden md:block text-white text-sm lg:text-base">
+            Sign In
+          </p>
+          <PiUser className="text-white text-lg lg:text-xl" />
+        </Link>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setNavOpen(!navOpen)}
+          className="text-2xl md:hidden"
+        >
+          {navOpen ? (
+            <IoMdClose className="text-white" />
+          ) : (
+            <TbMenu className="text-white" />
+          )}
         </button>
+      </div>
+
+      {/* Mobile Nav */}
+      <div
+        className={`absolute top-full left-0 w-full bg-slate-950 md:hidden flex-col items-center gap-6 py-6 rounded-b-2xl shadow-md ${
+          navOpen ? "flex" : "hidden"
+        }`}
+      >
+        {[...mainLinks, ...extraLinks].map((item, index) => (
+          <Link
+            key={index}
+            href={item.url}
+            onClick={() => setNavOpen(false)}
+            className="text-white font-semibold hover:text-emerald-400"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
     </main>
-  )
+  );
 }

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export default function Home() {
   return (
-    <main className="bg-[#0f172a] text-white">
+    <main className="bg-[#0f172a] text-white min-h-dvh relative z-0 ">
       {/* 🔥 HERO */}
       <section className="min-h-[90vh] flex flex-col justify-center items-center text-center px-4">
         
