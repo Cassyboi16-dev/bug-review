@@ -11,9 +11,9 @@ export default function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const mainLinks = [
-    { label: "Home", url: "/home" },
+    { label: "Home", url: "/" },
     { label: "Explore", url: "/explore" },
-    { label: "Code Reviews", url: "/code-reviews" },
+    { label: "Bug Reviews", url: "/bug-reviews" },
   ];
 
   const extraLinks = [
@@ -56,7 +56,7 @@ export default function Navbar() {
         <div className="relative hidden md:block lg:hidden">
           <button
             onClick={() => setMoreOpen(!moreOpen)}
-            className="text-white text-sm hover:text-emerald-300"
+            className="text-sm text-white"
           >
             More
           </button>
@@ -67,7 +67,7 @@ export default function Navbar() {
                 <Link
                   key={index}
                   href={item.url}
-                  className="text-white text-sm hover:text-emerald-400"
+                  className="text-sm text-emerald-400"
                 >
                   {item.label}
                 </Link>
@@ -77,7 +77,7 @@ export default function Navbar() {
         </div>
 
         {/* Show ALL links on large screens */}
-        <div className="hidden lg:flex gap-6">
+        <div className="hidden lg:flex items-center gap-6">
           {extraLinks.map((item, index) => (
             <Link
               key={index}
@@ -95,7 +95,7 @@ export default function Navbar() {
 
         {/* Sign In */}
         <Link
-          href="#"
+          href="/signin"
           className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
         >
           <p className="hidden md:block text-white text-sm lg:text-base">
