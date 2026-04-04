@@ -5,8 +5,14 @@ import { useState } from "react";
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-
+import {  useSession } from "next-auth/react";
+import Avatar from '@mui/material/Avatar';
 export default function Navbar() {
+
+const { data: session } = useSession();
+console.log("Session data in Navbar:", session);
+
+
   const [navOpen, setNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -18,7 +24,8 @@ export default function Navbar() {
 
   const extraLinks = [
     { label: "About Us", url: "/about" },
-    { label: "Notifications", url: "/notifications" },
+    { label: "Messages", url: "/messages" },
+    { label: "Post a Bug", url: "/upload" },
   ];
 
   return (
@@ -94,15 +101,22 @@ export default function Navbar() {
       <div className="flex items-center gap-3 md:gap-4">
 
         {/* Sign In */}
-        <Link
-          href="/signin"
-          className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
-        >
+          {session ? <Link
+              href="/signin"
+              className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
+            >
           <p className="hidden md:block text-white text-sm lg:text-base">
             Sign In
           </p>
           <PiUser className="text-white text-lg lg:text-xl" />
-        </Link>
+        </Link> : (
+            <Avatar
+              src={session?.user?.image}
+              alt={session?.user?.name}
+              className="text-white text-lg lg:text-xl"
+            />
+          ) 
+        }
 
         {/* Mobile Menu Button */}
         <button

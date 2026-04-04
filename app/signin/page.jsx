@@ -24,7 +24,7 @@ export default async function SignIn() {
           <input
             type="password"
             placeholder="Input your password"
-            className="flex flex-col border rounded-xl p-3 mt-4"
+            className="flex flex-col border rounded-xl p-3 mt-4 bg-white text-black"
           />
 
           <button
@@ -53,7 +53,7 @@ export default async function SignIn() {
           <form
             action={async () => {
               "use server";
-              await signIn("google");
+              await signIn("github");
             }}
           >
             <button className="border p-6 text-3xl rounded-full hover:border-emerald-400 cursor-pointer">
