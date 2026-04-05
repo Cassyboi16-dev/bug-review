@@ -19,7 +19,7 @@ export default function Footer(){
     },
   ]
   return (
-    <main className="max-md:py-3 py-5">
+    <main className="max-md:py-3 py-5 shadow-lime-500 border rounded-md flex-col items-center justify-center gap-5">
       <div className="flex items-center justify-center">
         <Image
         src={"/bug.png"}
@@ -33,7 +33,7 @@ export default function Footer(){
       <div className="flex gap-5 items-center justify-center text-black px-2 max-md:flex-col max-md:text-center max-md:py-15 pb-3">
        {
          footerHover.map((content, index)=>(
-          <Link href={"#"} key={index} className="hover:text-emerald-400 hover:underline-offset-auto">{content.label}</Link>
+          <Link href={"#"} key={index} className="hover:text-emerald-400 text-gray-500 hover:underline-offset-auto">{content.label}</Link>
 
         ))
        }

@@ -1,20 +1,22 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-import {  useSession } from "next-auth/react";
-import Avatar from '@mui/material/Avatar';
+import { useSession, signOut, signIn } from "next-auth/react";
+import Avatar from "@mui/material/Avatar";
+
 export default function Navbar() {
-
-const { data: session } = useSession();
-console.log("Session data in Navbar:", session);
-
+  const { data: session, status } = useSession();
 
   const [navOpen, setNavOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+
+  if (status === "loading") return null;
 
   const mainLinks = [
     { label: "Home", url: "/" },
@@ -25,12 +27,11 @@ console.log("Session data in Navbar:", session);
   const extraLinks = [
     { label: "About Us", url: "/about" },
     { label: "Messages", url: "/messages" },
-    { label: "Post a Bug", url: "/upload" },
+    ...(session ? [{ label: "Post a Bug", url: "/upload" }] : []),
   ];
 
   return (
     <main className="flex items-center justify-between px-4 md:px-6 lg:px-10 py-3 md:py-4 relative z-50 bg-gradient-to-r from-slate-900 to-slate-950 shadow-md border-b-2">
-
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 z-50">
         <Image
@@ -45,10 +46,8 @@ console.log("Session data in Navbar:", session);
         </p>
       </Link>
 
-      {/* Tablet + Desktop Nav */}
+      {/* Desktop Nav */}
       <div className="hidden md:flex items-center gap-4 lg:gap-6 relative">
-
-        {/* Main links */}
         {mainLinks.map((item, index) => (
           <Link
             key={index}
@@ -59,7 +58,7 @@ console.log("Session data in Navbar:", session);
           </Link>
         ))}
 
-        {/* More dropdown (ONLY on tablet) */}
+        {/* Tablet More */}
         <div className="relative hidden md:block lg:hidden">
           <button
             onClick={() => setMoreOpen(!moreOpen)}
@@ -83,7 +82,7 @@ console.log("Session data in Navbar:", session);
           )}
         </div>
 
-        {/* Show ALL links on large screens */}
+        {/* Large Screens */}
         <div className="hidden lg:flex items-center gap-6">
           {extraLinks.map((item, index) => (
             <Link
@@ -99,24 +98,56 @@ console.log("Session data in Navbar:", session);
 
       {/* Right Side */}
       <div className="flex items-center gap-3 md:gap-4">
-
-        {/* Sign In */}
-          {session ? <Link
-              href="/signin"
-              className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
+        {/* AUTH UI */}
+        {session ? (
+          <div className="relative">
+            <div
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-2 cursor-pointer"
             >
-          <p className="hidden md:block text-white text-sm lg:text-base">
-            Sign In
-          </p>
-          <PiUser className="text-white text-lg lg:text-xl" />
-        </Link> : (
-            <Avatar
-              src={session?.user?.image}
-              alt={session?.user?.name}
-              className="text-white text-lg lg:text-xl"
-            />
-          ) 
-        }
+              <Avatar
+                src={session.user?.image || ""}
+                alt={session.user?.name || ""}
+              />
+              <p className="hidden md:block text-white text-sm">
+                {session.user?.name}
+              </p>
+            </div>
+
+            {/* Dropdown (NO sign in/out here) */}
+            {profileOpen && (
+              <div className="absolute right-0 mt-2 bg-slate-900 p-4 rounded-lg shadow-lg w-60 flex flex-col gap-3">
+                {/* User Info */}
+                <div>
+                  <p className="text-white text-sm font-semibold">
+                    {session.user?.name}
+                  </p>
+                  <p className="text-gray-400 text-xs">{session.user?.email}</p>
+                </div>
+
+                <div className="border-t border-gray-700"></div>
+
+                {/* Sign Out */}
+                <button
+                  onClick={() => signOut({ callbackUrl: "/signin" })}
+                  className="text-red-400 text-sm text-left hover:text-red-500 transition"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => signIn("google", { callbackUrl: "/upload" })}
+            className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
+          >
+            <p className="hidden md:block text-white text-sm lg:text-base">
+              Sign In
+            </p>
+            <PiUser className="text-white text-lg lg:text-xl" />
+          </button>
+        )}
 
         {/* Mobile Menu Button */}
         <button
@@ -147,6 +178,23 @@ console.log("Session data in Navbar:", session);
             {item.label}
           </Link>
         ))}
+
+        {/* Mobile Auth */}
+        {session ? (
+          <button
+            onClick={() => signOut({ callbackUrl: "/signin" })}
+            className="text-white hover:text-red-400"
+          >
+            Sign Out
+          </button>
+        ) : (
+          <button
+            onClick={() => signIn("google", { callbackUrl: "/upload" })}
+            className="text-white hover:text-emerald-400"
+          >
+            Sign In
+          </button>
+        )}
       </div>
     </main>
   );
