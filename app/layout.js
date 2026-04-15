@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Bug Review/HomePage",
+  title: "Bug Review - Fast, Friendly, and Focused Feedback for Your Code",
   description: "A Place to get your Bugs Reviewed Fast",
 };
 
@@ -26,9 +26,9 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <Navbar/>
+          <Navbar />
           {children}
-          <Footer/>
+          <Footer />
         </AuthProvider>
       </body>
     </html>

@@ -8,6 +8,11 @@ import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
 import { useSession, signOut, signIn } from "next-auth/react";
 import Avatar from "@mui/material/Avatar";
+import { FiBell, FiMail, FiBookmark, FiHeart } from "react-icons/fi";
+import { HiBellAlert } from "react-icons/hi2";
+import { AiOutlineTeam } from "react-icons/ai";
+import { redirect } from "next/navigation";
+
 
 export default function Navbar() {
   const { data: session, status } = useSession();
@@ -15,23 +20,38 @@ export default function Navbar() {
   const [navOpen, setNavOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("DMs"); // DMs | Posts | Groups
 
   if (status === "loading") return null;
 
   const mainLinks = [
     { label: "Home", url: "/" },
-    { label: "Explore", url: "/explore" },
+    ...(session ? [{ label: "Explore", url: "/explore" }] : []),
     { label: "Bug Reviews", url: "/bug-reviews" },
   ];
 
   const extraLinks = [
     { label: "About Us", url: "/about" },
-    { label: "Messages", url: "/messages" },
-    ...(session ? [{ label: "Post a Bug", url: "/upload" }] : []),
+    { label: "Post a Bug", url: "/post" },
+    { label: "Upload", url: "/upload" },
   ];
 
+  // Sample notifications
+  const notifications = {
+    DMs: [
+      { id: 1, user: "Jane", text: "Hey, can you help me debug this?", icon: <FiMail className="text-emerald-400" /> },
+    ],
+    Posts: [
+      { id: 2, user: "Alex", text: "Your bug report got a solution!", icon: <HiBellAlert className="text-emerald-400" /> },
+    ],
+    Groups: [
+      { id: 3, group: "Frontend Devs", text: "Check out this new JavaScript bug fix.", icon: <AiOutlineTeam className="text-emerald-400" /> },
+    ],
+  };
+
   return (
-    <main className="flex items-center justify-between px-4 md:px-6 lg:px-10 py-3 md:py-4 relative z-50 bg-gradient-to-r from-slate-900 to-slate-950 shadow-md border-b-2">
+    <main className="flex items-center justify-between px-4 md:px-6 sticky lg:px-10 py-3 md:py-4 z-50 bg-gradient-to-r from-slate-900 to-slate-950 shadow-md border-b-2">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 z-50">
         <Image
@@ -73,7 +93,8 @@ export default function Navbar() {
                 <Link
                   key={index}
                   href={item.url}
-                  className="text-sm text-emerald-400"
+                  className={`text-sm ${item.disabled ? "text-gray-500 cursor-not-allowed" : "text-emerald-400"}`
+                  }
                 >
                   {item.label}
                 </Link>
@@ -97,56 +118,84 @@ export default function Navbar() {
       </div>
 
       {/* Right Side */}
-      <div className="flex items-center gap-3 md:gap-4">
-        {/* AUTH UI */}
+      <div className="flex items-center gap-3 md:gap-4 relative">
         {session ? (
-          <div className="relative">
-            <div
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Avatar
-                src={session.user?.image || ""}
-                alt={session.user?.name || ""}
-              />
-              <p className="hidden md:block text-white text-sm">
-                {session.user?.name}
-              </p>
+          <>
+            {/* Notifications */}
+            <div className="relative">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative text-white text-xl p-2 rounded hover:bg-white/10 transition"
+              >
+                <FiBell />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
+
+              {notificationsOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-white/10 rounded-xl shadow-lg overflow-hidden z-50">
+                  {/* Tabs */}
+                  <div className="flex border-b border-white/10">
+                    {["DMs", "Posts", "Groups"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`flex-1 text-sm p-2 font-semibold ${
+                          activeTab === tab ? "text-emerald-300 border-b-2 border-emerald-300" : "text-gray-400 hover:text-emerald-300"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="max-h-64 overflow-y-auto p-2 flex flex-col gap-2">
+                    {(notifications[activeTab] || []).map((n) => (
+                      <div key={n.id} className="flex items-start gap-2 p-2 rounded hover:bg-white/5 transition">
+                        {n.icon}
+                        <div>
+                          <p className="text-sm text-white font-semibold">
+                            {n.user || n.group}
+                          </p>
+                          <p className="text-xs text-gray-400">{n.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {(!notifications[activeTab] || notifications[activeTab].length === 0) && (
+                      <p className="text-gray-500 text-xs p-2">No notifications</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Dropdown (NO sign in/out here) */}
-            {profileOpen && (
-              <div className="absolute right-0 mt-2 bg-slate-900 p-4 rounded-lg shadow-lg w-60 flex flex-col gap-3">
-                {/* User Info */}
-                <div>
-                  <p className="text-white text-sm font-semibold">
+            {/* Profile */}
+            <div className="relative">
+              <div
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Link href="/profile" className="flex items-center gap-3">
+                  <Avatar
+                    src={session.user?.image || ""}
+                    alt={session.user?.name || ""}
+                  />
+                  <p className="hidden md:block text-white text-sm">
                     {session.user?.name}
                   </p>
-                  <p className="text-gray-400 text-xs">{session.user?.email}</p>
-                </div>
-
-                <div className="border-t border-gray-700"></div>
-
-                {/* Sign Out */}
-                <button
-                  onClick={() => signOut({ callbackUrl: "/signin" })}
-                  className="text-red-400 text-sm text-left hover:text-red-500 transition"
-                >
-                  Sign Out
-                </button>
+                </Link>
               </div>
-            )}
-          </div>
+            </div>
+          </>
         ) : (
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/upload" })}
+          <Link href="/signin"
             className="flex items-center gap-1 hover:border-b hover:border-emerald-400 pb-1 transition"
           >
             <p className="hidden md:block text-white text-sm lg:text-base">
               Sign In
             </p>
             <PiUser className="text-white text-lg lg:text-xl" />
-          </button>
+          </Link>
         )}
 
         {/* Mobile Menu Button */}

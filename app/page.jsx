@@ -17,14 +17,14 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-black drop-shadow-lg"
         >
-          Turn <span className="text-emerald-400">Errors</span> Into
+          Turn <span className="text-emerald-400 text-5xl md:text-7xl">Errors</span> Into
         </motion.h1>
 
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="font-serif drop-shadow-lg"
+          className="font-serif drop-shadow-lg text-3xl md:text-5xl font-bold mt-2"
         >
           <TypeAnimation
             sequence={["Expertise", 2000, "Solutions", 2000, "Confidence", 2000]}
@@ -41,12 +41,11 @@ export default function Home() {
 
         <div className="flex flex-col md:flex-row gap-4 mt-6">
           <Link
-            href="/signup"
+            href="/signin"
             className="bg-emerald-500 px-6 py-3 rounded-xl font-semibold hover:scale-105 transition"
           >
             Get Started
-          </Link>
-
+          </Link>  
           <Link
             href="/explore"
             className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-black transition"
@@ -111,10 +110,10 @@ export default function Home() {
         <p className="mt-4 drop-shadow-md">Join developers solving real bugs every day.</p>
 
         <Link
-          href="/signup"
+          href="/signin"
           className="inline-block mt-6 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:scale-105 transition"
         >
-          Create Account
+          Sign In to Post a Bug
         </Link>
       </section>
     </main>

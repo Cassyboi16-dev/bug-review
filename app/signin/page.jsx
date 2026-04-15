@@ -10,11 +10,12 @@ import { useRouter } from "next/navigation";
 export default function SignIn() {
   const { data: session } = useSession();
   const router = useRouter();
+  
 
   // ✅ Auto redirect if already logged in
   useEffect(() => {
     if (session) {
-      router.push("/upload");
+      router.push("/home");
     }
   }, [session, router]);
 
@@ -45,7 +46,7 @@ export default function SignIn() {
             className="border rounded-xl p-3 bg-white text-black"
           />
 
-          <button
+          <button 
             type="submit"
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition hover:scale-105 text-2xl"
           >
@@ -62,6 +63,7 @@ export default function SignIn() {
 
           {/* GOOGLE */}
           <button
+            
             onClick={() =>
               signIn("google", { callbackUrl: "/upload" })
             }
@@ -72,6 +74,7 @@ export default function SignIn() {
 
           {/* GITHUB */}
           <button
+              
             onClick={() =>
               signIn("github", { callbackUrl: "/upload" })
             }
