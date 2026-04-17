@@ -187,7 +187,7 @@ export default function Debug() {
                 <label className="text-xs sm:text-sm font-semibold text-gray-300">
                   Select Language
                 </label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-4 gap-2 text-center  overflow-y-auto">
                   {Object.entries(LANGUAGES).map(([key, { name }]) => (
                     <button
                       key={key}
