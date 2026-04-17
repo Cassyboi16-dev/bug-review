@@ -4,6 +4,13 @@ import Github from "next-auth/providers/github";
 import discord from "next-auth/providers/discord";
 import { FirestoreAdapter } from "@auth/firebase-adapter";
 import { cert } from "firebase-admin/app";
+
+// Helper to generate default username
+const generateDefaultUsername = () => {
+  const randomNum = Math.floor(Math.random() * 9999) + 1;
+  return `bugger${randomNum}`;
+};
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
@@ -26,4 +33,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       privateKey: process.env.AUTH_FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     }),
   }),
+  callbacks: {
+    async signIn({ user, isNewUser }) {
+      if (isNewUser && user.id) {
+        // Generate default username for first-time users
+        user.username = generateDefaultUsername();
+      }
+      return true;
+    },
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+        session.user.username = user.username || generateDefaultUsername();
+      }
+      return session;
+    },
+  },
 });

@@ -5,22 +5,61 @@ import * as Yup from "yup";
 import { GrUploadOption } from "react-icons/gr";
 import { GiCheckMark } from "react-icons/gi";
 import { MdErrorOutline } from "react-icons/md";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 
 export default function UploadClient({ session }) {
-  const author = session?.user?.name || "Anonymous";
+  const author = session?.user?.username || session?.user?.name || "Anonymous";
+  const authorId = session?.user?.id || "";
   const authorImg = session?.user?.image || "/default-avatar.png";
 
   const datestamp = new Date().toLocaleDateString();
   const timestamp = new Date().toLocaleTimeString();
 
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
+  const [country, setCountry] = useState("");
+  const [locationLoading, setLocationLoading] = useState(true);
 
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
+
+  // =========================
+  // GET USER LOCATION
+  // =========================
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          try {
+            // Reverse geocoding using Nominatim (OpenStreetMap)
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            );
+            const data = await response.json();
+            const countryName = data.address?.country;
+
+            if (countryName) {
+              setCountry(countryName);
+            }
+          } catch (error) {
+            console.error("Error getting country:", error);
+          } finally {
+            setLocationLoading(false);
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          setLocationLoading(false);
+        },
+      );
+    } else {
+      setLocationLoading(false);
+    }
+  }, []);
 
   const autoResize = (e) => {
     const el = e.target;
@@ -28,27 +67,45 @@ export default function UploadClient({ session }) {
     el.style.height = el.scrollHeight + "px";
   };
 
-  const initialVal = { title: "", description: "", category: "" };
+  const initialVal = {
+    title: "",
+    description: "",
+    category: "",
+    country: country,
+  };
 
   const formValid = Yup.object().shape({
-    title: Yup.string()
-      .min(5, "Title must be at least 5 characters")
-      .required("*Title is required"),
+    title: Yup.string().min(5).required("*Title is required"),
     description: Yup.string().required("*Description is required"),
     category: Yup.string().required("*Category is required"),
+    country: Yup.string().required("*Country is required"),
   });
 
   return (
-    <main className="min-h-dvh bg-[#020617] text-white px-4 py-12 flex justify-center">
-      <div className="w-full max-w-3xl border border-white/10 rounded-xl p-6 md:p-10 shadow-2xl bg-[#12131c]/70 backdrop-blur-lg">
-
-        <h1 className="text-3xl md:text-5xl font-bold mb-12 text-center">
-          Upload Bug Report
-        </h1>
+    <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f0f1e] to-[#050816] text-white px-4 py-12 flex justify-center items-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl border border-white/20 rounded-3xl p-8 md:p-12 shadow-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent mb-3">
+            Report a Bug
+          </h1>
+          <p className="text-gray-400">
+            Share your bug, get solutions, help the community
+          </p>
+        </motion.div>
 
         <Formik
           initialValues={initialVal}
           validationSchema={formValid}
+          enableReinitialize
           onSubmit={async (values, { resetForm }) => {
             try {
               setStatus("loading");
@@ -56,9 +113,22 @@ export default function UploadClient({ session }) {
               await addDoc(collection(db, "bugPosts"), {
                 ...values,
                 author,
+                authorId,
                 authorImg,
+
+                // ✅ KEEP (for display)
                 datestamp,
                 timestamp,
+
+                // ✅ ADD (CRITICAL FOR EXPLORE PAGE)
+                createdAt: serverTimestamp(),
+
+                // ✅ ADD (PREVENT ERRORS)
+                likedBy: [],
+                savedBy: [],
+                viewedBy: [authorId],
+                shares: 0,
+                comments: [],
               });
 
               setStatus("success");
@@ -77,130 +147,160 @@ export default function UploadClient({ session }) {
           }}
         >
           <Form className="flex flex-col gap-8">
-
-            {/* Author */}
-            <div className="flex items-center gap-3">
+            {/* Author Info */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-4 bg-white/5 rounded-2xl p-4 border border-white/10"
+            >
               <img
                 src={authorImg}
-                alt="author"
-                className="w-12 h-12 rounded-full object-cover"
+                className="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-400"
               />
               <div>
-                <p className="font-semibold">{author}</p>
+                <p className="font-semibold text-white">{author}</p>
                 <p className="text-xs text-gray-400">{datestamp}</p>
-                <p className="text-xs text-gray-400">{timestamp}</p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Title */}
-            <div>
-              <label>Title</label>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <label className="block text-sm font-semibold text-gray-300 mb-2">
+                Bug Title
+              </label>
               <Field
                 name="title"
-                placeholder="Enter a clear title..."
-                className="w-full px-4 py-3 rounded-xl bg-transparent border border-white/10"
+                placeholder="e.g., React component not re-rendering on state change"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500"
               />
-              <ErrorMessage name="title" component="p" className="text-red-400 text-sm" />
-            </div>
+              <ErrorMessage
+                name="title"
+                component="p"
+                className="text-red-400 text-sm mt-1"
+              />
+            </motion.div>
 
             {/* Description */}
-            <div>
-              <label>Description</label>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <label className="block text-sm font-semibold text-gray-300 mb-2">
+                Description
+              </label>
               <Field name="description">
                 {({ field }) => (
                   <textarea
                     {...field}
                     onInput={autoResize}
-                    rows={3}
-                    className="w-full px-4 py-6 rounded-xl text-white border-white/10 border"
+                    placeholder="Describe your bug, steps to reproduce, expected vs actual behavior..."
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500 resize-none"
                   />
                 )}
               </Field>
-              <ErrorMessage name="description" component="p" className="text-red-400 text-sm" />
-            </div>
-
-            {/* Category */}
-            <div>
-              <label>Category</label>
-              <Field
-                name="category"
-                placeholder="UI, Auth, Performance..."
-                className="w-full px-4 py-3 rounded-xl bg-transparent border border-white/10"
+              <ErrorMessage
+                name="description"
+                component="p"
+                className="text-red-400 text-sm mt-1"
               />
-              <ErrorMessage name="category" component="p" className="text-red-400 text-sm" />
-            </div>
+            </motion.div>
 
-            {/* Submit */}
-            <button
+            {/* Category & Country Row */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.45 }}
+              className="grid grid-cols-2 gap-4"
+            >
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Category
+                </label>
+                <Field
+                  name="category"
+                  placeholder="e.g., Frontend, Backend, Database"
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500"
+                />
+                <ErrorMessage
+                  name="category"
+                  component="p"
+                  className="text-red-400 text-sm mt-1"
+                />
+              </div>
+
+              {/* Country */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Location
+                  {locationLoading && (
+                    <span className="text-gray-400 text-xs ml-2">
+                      (detecting...)
+                    </span>
+                  )}
+                </label>
+                <Field
+                  name="country"
+                  placeholder={
+                    locationLoading ? "Detecting..." : "Your country"
+                  }
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500 disabled:opacity-50"
+                  disabled={locationLoading}
+                />
+                <ErrorMessage
+                  name="country"
+                  component="p"
+                  className="text-red-400 text-sm mt-1"
+                />
+              </div>
+            </motion.div>
+
+            {/* Submit Button */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={status === "loading"}
-              className="flex items-center justify-center gap-2 bg-emerald-400 text-black px-6 py-3 rounded-full"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-400 to-blue-400 text-black font-semibold px-8 py-3 rounded-full hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-200 disabled:opacity-50"
             >
-              Post <GrUploadOption />
-            </button>
-
+              <GrUploadOption className="text-lg" />
+              {status === "loading" ? "Posting..." : "Post Bug Report"}
+            </motion.button>
           </Form>
         </Formik>
-      </div>
+      </motion.div>
 
-      {/* AUDIO */}
-      <audio ref={successAudioRef} src="/public/success.mp3" preload="auto" />
-      <audio ref={errorAudioRef} src="/public/buzz.mp3" preload="auto" />
+      <audio ref={successAudioRef} src="/success.mp3" />
+      <audio ref={errorAudioRef} src="/buzz.mp3" />
 
-      {/* ANIMATIONS */}
       <AnimatePresence>
         {status !== "idle" && (
-          <motion.div
-            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+          <motion.div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+            {status === "loading" && <p>Posting...</p>}
 
-            {/* LOADING */}
-            {status === "loading" && (
-              <div className="flex flex-col items-center gap-4">
-                <motion.div
-                  className="w-16 h-16 bg-emerald-400 rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 0.8,
-                    ease: "easeInOut",
-                  }}
-                />
-                <p>Posting...</p>
+            {status === "success" && (
+              <div className="text-emerald-400 text-2xl flex flex-col items-center">
+                <GiCheckMark className="text-5xl" />
+                Bug Posted Successfully
               </div>
             )}
 
-            {/* SUCCESS */}
-            {status === "success" && (
-              <motion.div
-                initial={{ scale: 0.5 }}
-                animate={{ scale: 1 }}
-                className="bg-[#0f172a] p-10 rounded-2xl flex flex-col items-center gap-4"
-              >
-                <div className="text-emerald-400 text-6xl">
-                  <GiCheckMark />
-                </div>
-                <p>Bug Posted Successfully</p>
-              </motion.div>
-            )}
-
-            {/* ERROR */}
             {status === "error" && (
-              <motion.div
-                animate={{ x: [0, -10, 10, -10, 10, 0] }}
-                transition={{ duration: 0.4 }}
-                className="bg-[#0f172a] p-10 rounded-2xl flex flex-col items-center gap-4 border border-red-500"
-              >
-                <div className="text-red-400 text-6xl">
-                  <MdErrorOutline />
-                </div>
-                <p>Failed to Post Bug</p>
-              </motion.div>
+              <div className="text-red-400 text-2xl flex flex-col items-center">
+                <MdErrorOutline className="text-5xl" />
+                Failed to Post
+              </div>
             )}
-
           </motion.div>
         )}
       </AnimatePresence>

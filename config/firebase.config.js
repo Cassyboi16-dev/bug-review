@@ -11,9 +11,9 @@ const firebaseConfig = {
   projectId: "bugreview-76131",
   storageBucket: "bugreview-76131.firebasestorage.app",
   messagingSenderId: "624455085191",
-  appId: "1:624455085191:web:2eec94eb85ffb9a462dc22"
+  appId: "1:624455085191:web:2eec94eb85ffb9a462dc22",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app)
+export const db = getFirestore(app);

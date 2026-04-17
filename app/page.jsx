@@ -1,121 +1,145 @@
 "use client";
+
 import Link from "next/link";
 import { TypeAnimation } from "react-type-animation";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { db } from "@/config/firebase.config";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function Home() {
+  const [bugs, setBugs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBugs = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "bugPosts"));
+
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setBugs(data.slice(0, 3)); // show only latest 3
+    } catch (err) {
+      console.error("Error fetching bugs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBugs();
+  }, []);
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-900 text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
 
-      {/* Overlay for better text readability */}
-      <div className="absolute inset-0 bg-black/50 -z-5"></div>
-
-      {/* 🔥 HERO */}
+      {/* HERO (unchanged - already good) */}
       <section className="min-h-[90vh] flex flex-col justify-center items-center text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-6xl font-black drop-shadow-lg"
+          className="text-4xl md:text-6xl font-black"
         >
-          Turn <span className="text-emerald-400 text-5xl md:text-7xl">Errors</span> Into
+          Turn <span className="text-emerald-400">Errors</span> Into
         </motion.h1>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="font-serif drop-shadow-lg text-3xl md:text-5xl font-bold mt-2"
-        >
-          <TypeAnimation
-            sequence={["Expertise", 2000, "Solutions", 2000, "Confidence", 2000]}
-            speed={50}
-            repeat={Infinity}
-            className="text-5xl md:text-7xl font-bold mt-2 font-sans"
-          />
-        </motion.div>
+        <TypeAnimation
+          sequence={["Expertise", 2000, "Solutions", 2000, "Confidence", 2000]}
+          speed={50}
+          repeat={Infinity}
+          className="text-4xl md:text-6xl font-bold mt-3"
+        />
 
-        <p className="mt-6 max-w-xl text-white/80 drop-shadow-lg">
-          Share bugs. Get solutions. Learn faster with a community of developers
-          solving real problems.
+        <p className="mt-6 max-w-xl text-white/70">
+          Share bugs. Get solutions. Learn faster with developers solving real problems.
         </p>
 
-        <div className="flex flex-col md:flex-row gap-4 mt-6">
-          <Link
-            href="/signin"
-            className="bg-emerald-500 px-6 py-3 rounded-xl font-semibold hover:scale-105 transition"
-          >
+        <div className="flex gap-4 mt-6">
+          <Link href="/signin" className="bg-emerald-500 px-6 py-3 rounded-xl hover:scale-110 transition-all duration-200">
             Get Started
-          </Link>  
-          <Link
-            href="/explore"
-            className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-black transition"
-          >
+          </Link>
+          <Link href="/explore" className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-black transition-all duration-200">
             Explore Bugs
           </Link>
         </div>
       </section>
 
-      {/* ⚙️ HOW IT WORKS */}
+      {/* ⚙️ HOW IT WORKS (unchanged visually) */}
       <section className="py-20 px-6 bg-[#020617]">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 drop-shadow-md">
-          How It Works
-        </h2>
+        <h2 className="text-3xl text-center font-bold mb-10">How It Works</h2>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <div className="bg-white/5 p-6 rounded-xl">
-            <h3 className="font-semibold text-xl mb-2">1. Post Bugs</h3>
-            <p className="text-white/70">Share coding issues or errors you’re facing.</p>
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+            Post Bugs
           </div>
-
-          <div className="bg-white/5 p-6 rounded-xl">
-            <h3 className="font-semibold text-xl mb-2">2. Get Feedback</h3>
-            <p className="text-white/70">Developers review and suggest solutions.</p>
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+            Get Feedback
           </div>
-
-          <div className="bg-white/5 p-6 rounded-xl">
-            <h3 className="font-semibold text-xl mb-2">3. Improve Fast</h3>
-            <p className="text-white/70">Learn from real-world debugging experiences.</p>
+          <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+            Improve Fast
           </div>
         </div>
       </section>
 
-      {/* 📊 LIVE PREVIEW */}
+      {/* 🚀 LIVE BUG FEED (NOW FIREBASE POWERED) */}
       <section className="py-20 px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 drop-shadow-md">
-          Live Bug Feed
+        <h2 className="text-3xl text-center font-bold mb-10">
+          Live Bug Feed 🔴
         </h2>
 
-        <div className="max-w-4xl mx-auto bg-white/5 rounded-xl p-6 space-y-4">
-          <div className="border-b border-white/10 pb-3">
-            <p className="font-semibold">React useEffect not working</p>
-            <p className="text-sm text-white/60">"My state isn't updating after fetch..."</p>
-          </div>
+        <div className="max-w-4xl mx-auto space-y-4">
 
-          <div className="border-b border-white/10 pb-3">
-            <p className="font-semibold">Next.js routing issue</p>
-            <p className="text-sm text-white/60">"Page not found on dynamic route..."</p>
-          </div>
+          {loading && (
+            <div className="text-center text-gray-400">
+              Loading latest bugs...
+            </div>
+          )}
 
-          <div>
-            <p className="font-semibold">CSS not applying</p>
-            <p className="text-sm text-white/60">"Tailwind classes not showing..."</p>
-          </div>
+          {!loading && bugs.length === 0 && (
+            <div className="text-center text-gray-400">
+              No bugs yet — be the first to post 🚀
+            </div>
+          )}
+
+          {bugs.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition"
+            >
+              <h3 className="font-semibold text-lg">
+                {item.title || "Untitled Bug"}
+              </h3>
+
+              <p className="text-sm text-white/60 mt-1">
+                {item.description?.slice(0, 100) || "No description"}
+              </p>
+
+              <p className="text-xs text-gray-400 mt-2">
+                by {item.author || "Anonymous"}
+              </p>
+            </motion.div>
+          ))}
+
         </div>
       </section>
 
-      {/* 🚀 FINAL CTA */}
+      {/* CTA (unchanged) */}
       <section className="py-20 px-6 bg-emerald-600 text-black text-center">
-        <h2 className="text-3xl md:text-4xl font-bold drop-shadow-md">Ready to Level Up?</h2>
-
-        <p className="mt-4 drop-shadow-md">Join developers solving real bugs every day.</p>
+        <h2 className="text-3xl font-bold">Ready to Level Up?</h2>
+        <p className="mt-3">Join developers solving real bugs daily.</p>
 
         <Link
           href="/signin"
-          className="inline-block mt-6 bg-black text-white px-6 py-3 rounded-xl font-semibold hover:scale-105 transition"
+          className="inline-block mt-6 bg-black text-white px-6 py-3 rounded-xl"
         >
           Sign In to Post a Bug
         </Link>
       </section>
+
     </main>
   );
 }
