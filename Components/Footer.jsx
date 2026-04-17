@@ -12,7 +12,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[#050816] text-white border-t border-white/10 mt-10">
+    <footer className="bg-surface text-foreground border-t border-border mt-10 dark:bg-[#050816] dark:text-white dark:border-white/10">
 
       {/* MAIN CONTAINER */}
       <div className="max-w-5xl mx-auto px-6 py-10">
@@ -67,11 +67,11 @@ export default function Footer() {
 
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
 
-          <p className="text-gray-600">
+          <p className="text-slate-600 dark:text-gray-400">
             Built for developers • Powered by NextJS & Firebase
           </p>
 
-          <p className="text-gray-600">Email:cassyboi16@proton.me</p>
+          <p className="text-slate-600 dark:text-gray-400">Email:cassyboi16@proton.me</p>
 
         </div>
 

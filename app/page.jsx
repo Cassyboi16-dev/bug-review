@@ -34,7 +34,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
-
       {/* HERO (unchanged - already good) */}
       <section className="min-h-[90vh] flex flex-col justify-center items-center text-center px-4">
         <motion.h1
@@ -53,14 +52,21 @@ export default function Home() {
         />
 
         <p className="mt-6 max-w-xl text-white/70">
-          Share bugs. Get solutions. Learn faster with developers solving real problems.
+          Share bugs. Get solutions. Learn faster with developers solving real
+          problems.
         </p>
 
         <div className="flex gap-4 mt-6">
-          <Link href="/signin" className="bg-emerald-500 px-6 py-3 rounded-xl hover:scale-110 transition-all duration-200">
+          <Link
+            href="/signin"
+            className="bg-emerald-500 px-6 py-3 rounded-xl hover:scale-110 transition-all duration-200"
+          >
             Get Started
           </Link>
-          <Link href="/explore" className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-black transition-all duration-200">
+          <Link
+            href="/explore"
+            className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-black transition-all duration-200"
+          >
             Explore Bugs
           </Link>
         </div>
@@ -90,7 +96,6 @@ export default function Home() {
         </h2>
 
         <div className="max-w-4xl mx-auto space-y-4">
-
           {loading && (
             <div className="text-center text-gray-400">
               Loading latest bugs...
@@ -123,7 +128,6 @@ export default function Home() {
               </p>
             </motion.div>
           ))}
-
         </div>
       </section>
 
@@ -139,7 +143,6 @@ export default function Home() {
           Sign In to Post a Bug
         </Link>
       </section>
-
     </main>
   );
 }

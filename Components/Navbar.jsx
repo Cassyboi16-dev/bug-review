@@ -9,13 +9,14 @@ import Avatar from "@mui/material/Avatar";
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-import { FiBell } from "react-icons/fi";
+import { FiMoon, FiSun } from "react-icons/fi";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
 
   const [navOpen, setNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [theme, setTheme] = useState("system");
 
   const moreRef = useRef(null);
 
@@ -45,10 +46,40 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    const applyTheme = (value) => {
+      const root = document.documentElement;
+      root.classList.remove("light", "dark");
+
+      if (value === "dark") {
+        root.classList.add("dark");
+      } else if (value === "light") {
+        root.classList.add("light");
+      }
+
+      window.localStorage.setItem("bugreview-theme", value);
+      window.dispatchEvent(new CustomEvent("theme-change", { detail: value }));
+    };
+
+    const storedTheme = window.localStorage.getItem("bugreview-theme") || "system";
+    setTheme(storedTheme);
+    applyTheme(storedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(nextTheme);
+    window.localStorage.setItem("bugreview-theme", nextTheme);
+    window.dispatchEvent(new CustomEvent("theme-change", { detail: nextTheme }));
+  };
+
   if (status === "loading") return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050816]/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]/90 dark:bg-[#050816]/90 backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
@@ -59,7 +90,7 @@ export default function Navbar() {
             height={32}
             className="rounded-md border border-white/10"
           />
-          <span className="text-white font-semibold">BugReview</span>
+          <span className="text-slate-900 dark:text-white font-semibold">BugReview</span>
         </Link>
 
         {/* DESKTOP NAV */}
@@ -84,7 +115,7 @@ export default function Navbar() {
             </button>
 
             {moreOpen && (
-              <div className="absolute top-8 right-0 w-40 bg-[#0a0f2c] border border-white/10 rounded-xl p-2 flex flex-col gap-1">
+              <div className="absolute top-8 right-0 w-40 bg-surface dark:bg-[#0a0f2c] border border-border rounded-xl p-2 flex flex-col gap-1">
                 {extraLinks.map((item) => (
                   <Link
                     key={item.label}
@@ -102,6 +133,15 @@ export default function Navbar() {
 
         {/* RIGHT SIDE */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="hidden sm:inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-gray-300 hover:bg-white/10 transition"
+            aria-label="Toggle site theme"
+            title="Toggle site theme"
+          >
+            {theme === "dark" ? <FiSun /> : <FiMoon />}
+          </button>
+
           {session ? (
             <Link href="/profile">
               <Avatar src={session.user?.image || ""} />
@@ -128,7 +168,7 @@ export default function Navbar() {
 
       {/* MOBILE MENU */}
       {navOpen && (
-        <div className="md:hidden bg-[#050816] border-t border-white/10 px-4 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-surface dark:bg-[#050816] border-t border-border px-4 py-4 flex flex-col gap-4">
           {[...mainLinks, ...extraLinks].map((item) => (
             <Link
               key={item.label}

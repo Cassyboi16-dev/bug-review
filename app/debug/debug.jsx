@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { FiPlay, FiCopy, FiTrash2 } from "react-icons/fi";
-import CodeMirrorEditor from "@/Components/CodeMirrorEditor";
+import MonacoEditor from "@/Components/MonacoEditor";
 
 const LANGUAGES = {
   javascript: {
@@ -37,34 +37,30 @@ const LANGUAGES = {
     code: '<?php\necho "Hello, World!";\n?>',
     language: "php",
   },
-  ruby: { name: "Ruby", code: 'puts "Hello, World!"', language: "ruby" },
+  ruby: {
+    name: "Ruby",
+    code: 'puts "Hello, World!"',
+    language: "ruby",
+  },
   go: {
     name: "Go",
     code: 'package main\nimport "fmt"\nfunc main() {\n  fmt.Println("Hello, World!")\n}',
     language: "go",
   },
-  rust: {
-    name: "Rust",
-    code: 'fn main() {\n  println!("Hello, World!");\n}',
-    language: "rust",
+  bash: {
+    name: "Bash",
+    code: 'echo "Hello, World!"',
+    language: "bash",
   },
-  kotlin: {
-    name: "Kotlin",
-    code: 'fun main() {\n  println("Hello, World!")\n}',
-    language: "kotlin",
+  c: {
+    name: "C",
+    code: '#include <stdio.h>\nint main() {\n  printf("Hello, World!\\n");\n  return 0;\n}',
+    language: "c",
   },
-  swift: { name: "Swift", code: 'print("Hello, World!")', language: "swift" },
-  r: { name: "R", code: 'print("Hello, World!")', language: "r" },
-  bash: { name: "Bash", code: 'echo "Hello, World!"', language: "bash" },
-  html: {
-    name: "HTML",
-    code: "<!DOCTYPE html>\n<html>\n<head>\n  <title>Test</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>",
-    language: "html",
-  },
-  sql: {
-    name: "SQL",
-    code: 'SELECT "Hello, World!" as greeting;',
-    language: "sql",
+  lua: {
+    name: "Lua",
+    code: 'print("Hello, World!")',
+    language: "lua",
   },
 };
 
@@ -74,6 +70,14 @@ export default function Debug() {
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isCompatible, setIsCompatible] = useState(true);
+
+  useEffect(() => {
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isMobileAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isSmallViewport = typeof window !== "undefined" && window.innerWidth < 900;
+    setIsCompatible(!(isMobileAgent || isSmallViewport));
+  }, []);
 
   const executeCode = async () => {
     try {
@@ -81,8 +85,47 @@ export default function Debug() {
       setError("");
       setOutput("Executing...");
 
+      // JavaScript runs directly in browser (instant!)
+      if (language === "javascript") {
+        setOutput(""); // Clear the "Executing..." message
+        try {
+          const consoleLogs = [];
+          const mockConsole = {
+            log: (...args) =>
+              consoleLogs.push(
+                args
+                  .map((arg) =>
+                    typeof arg === "object"
+                      ? JSON.stringify(arg, null, 2)
+                      : String(arg)
+                  )
+                  .join(" ")
+              ),
+            error: (...args) =>
+              consoleLogs.push("ERROR: " + args.map((arg) => String(arg)).join(" ")),
+            warn: (...args) =>
+              consoleLogs.push("WARN: " + args.map((arg) => String(arg)).join(" ")),
+          };
+
+          const userFunction = new Function("console", code);
+          userFunction(mockConsole);
+
+          const output = consoleLogs.join("\n");
+          setOutput(output || "Code executed successfully with no output.");
+          setError("");
+          setLoading(false);
+          return;
+        } catch (err) {
+          setError(err.message || "JavaScript execution failed");
+          setOutput("");
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Other languages: execute via API (no installation required!)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for API
 
       const response = await fetch("/api/execute-code", {
         method: "POST",
@@ -124,13 +167,13 @@ export default function Debug() {
       }
     } catch (err) {
       if (err.name === "AbortError") {
-        setError("⏱️ Execution timeout - code is taking too long to run");
+        setError("⏱️ Execution timeout - code is taking too long to run. Try optimizing your code.");
       } else if (err instanceof TypeError && err.message.includes("fetch")) {
         setError(
-          "🌐 Network error - Unable to reach execution service. Please check your connection and try again.",
+          "🌐 Network error - Unable to reach execution service. Please check your internet connection and try again.",
         );
       } else {
-        setError(err.message || "❌ Error executing code");
+        setError(err.message || "❌ Error executing code. Please try again.");
       }
       setOutput("");
     } finally {
@@ -156,8 +199,22 @@ export default function Debug() {
     setError("");
   };
 
+  if (!isCompatible) {
+    return (
+      <main className="min-h-dvh bg-background text-foreground px-3 sm:px-4 py-6 sm:py-8">
+        <div className="max-w-4xl mx-auto bg-surface border border-border rounded-3xl p-8 text-center shadow-xl dark:bg-surface">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Code Tester Not Available</h1>
+          <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+            Your current browser or device is not supported for the interactive code tester.
+            You can still use other site features while we keep the tester optimized for compatible environments.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white px-3 sm:px-4 py-6 sm:py-8">
+    <main className="min-h-dvh bg-background text-foreground px-3 sm:px-4 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto">
         {/* HEADER */}
         <motion.div
@@ -179,7 +236,7 @@ export default function Debug() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col"
+            className="bg-surface backdrop-blur-lg border border-border rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col"
           >
             <div className="flex flex-col gap-4">
               {/* LANGUAGE SELECTOR */}
@@ -210,8 +267,8 @@ export default function Debug() {
                 <label className="text-xs sm:text-sm font-semibold text-gray-300">
                   Code
                 </label>
-                <div className="w-full h-48 sm:h-60 md:h-80 border border-white/10 rounded-lg overflow-hidden bg-black/50">
-                  <CodeMirrorEditor
+                <div className="w-full h-48 sm:h-60 md:h-80 border border-white/10 rounded-lg overflow-hidden bg-surface-muted/80 dark:bg-black/50">
+                  <MonacoEditor
                     code={code}
                     onChange={setCode}
                     language={language}
@@ -260,7 +317,7 @@ export default function Debug() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col min-h-96 sm:min-h-auto"
+            className="bg-surface backdrop-blur-lg border border-border rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col min-h-96 sm:min-h-auto"
           >
             <div className="flex flex-col gap-4 h-full">
               <div className="flex items-center justify-between gap-2">
@@ -279,10 +336,27 @@ export default function Debug() {
               </div>
 
               {/* OUTPUT DISPLAY */}
-              <div className="flex-1 bg-black/50 rounded-lg p-3 sm:p-4 border border-white/10 overflow-y-auto font-mono text-xs sm:text-sm">
+              <div className="flex-1 bg-surface-muted rounded-lg p-3 sm:p-4 border border-border overflow-y-auto font-mono text-xs sm:text-sm">
                 {error ? (
-                  <div className="text-red-400 whitespace-pre-wrap break-words">
-                    {error}
+                  <div className="text-red-300 whitespace-pre-wrap break-words space-y-2">
+                    {error.split("\n").map((line, idx) => (
+                      <div
+                        key={idx}
+                        className={`${
+                          line.includes("ERROR") || line.includes("❌")
+                            ? "text-red-400 font-semibold"
+                            : line.includes("HINT") || line.includes("💡")
+                              ? "text-yellow-400 font-semibold"
+                              : line.includes("FIXES") || line.includes("🔧")
+                                ? "text-blue-400 font-semibold"
+                                : line.includes("📍")
+                                  ? "text-cyan-300"
+                                  : "text-red-300"
+                        }`}
+                      >
+                        {line}
+                      </div>
+                    ))}
                   </div>
                 ) : output ? (
                   <div className="text-emerald-300 whitespace-pre-wrap break-words">
@@ -296,89 +370,145 @@ export default function Debug() {
               </div>
 
               {/* INFO */}
-              <div className="text-xs text-gray-400 bg-white/5 rounded-lg p-2 sm:p-3">
+              <div className="text-xs text-gray-400 bg-surface-muted/70 rounded-lg p-2 sm:p-3 dark:bg-white/5">
                 <p className="font-semibold mb-1">💡 Tips:</p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">
                   <li>Supports {Object.keys(LANGUAGES).length}+ languages</li>
                   <li>Use console.log/print for output</li>
-                  <li>Timeout: 15 seconds</li>
-                  <li>Perfect for debugging</li>
+                  <li>Timeout: 15 seconds max</li>
+                  <li>If service is unavailable, try again in a few moments</li>
+                  <li>Check your internet connection if errors occur</li>
                 </ul>
               </div>
             </div>
           </motion.div>
         </div>
 
-        {/* QUICK SNIPPETS */}
-        <motion.div
+        {/* FOOTER - QUICK SNIPPETS */}
+        <motion.footer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-4 sm:p-6 shadow-lg"
+          className="mt-12 pt-8 border-t border-white/20"
         >
-          <h2 className="text-lg sm:text-xl font-semibold text-emerald-300 mb-4">
-            Quick Test Examples
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            {[
-              {
-                label: "Loop Test",
-                lang: "javascript",
-                snippet:
-                  "for (let i = 1; i <= 5; i++) {\n  console.log('Number: ' + i);\n}",
-              },
-              {
-                label: "Array Operation",
-                lang: "python",
-                snippet:
-                  "numbers = [1, 2, 3, 4, 5]\nprint('Sum:', sum(numbers))\nprint('Average:', sum(numbers) / len(numbers))",
-              },
-              {
-                label: "Conditional Logic",
-                lang: "javascript",
-                snippet:
-                  "const age = 25;\nif (age >= 18) {\n  console.log('Adult');\n} else {\n  console.log('Minor');\n}",
-              },
-              {
-                label: "Function Test",
-                lang: "python",
-                snippet:
-                  "def greet(name):\n  return f'Hello, {name}!'\n\nprint(greet('World'))",
-              },
-              {
-                label: "Error Handling",
-                lang: "javascript",
-                snippet:
-                  "try {\n  const x = 10 / 0;\n  console.log(x);\n} catch (error) {\n  console.log('Caught error:', error.message);\n}",
-              },
-              {
-                label: "String Manipulation",
-                lang: "python",
-                snippet:
-                  "text = 'Hello World'\nprint('Original:', text)\nprint('Uppercase:', text.upper())\nprint('Reversed:', text[::-1])",
-              },
-            ].map((snippet, idx) => (
-              <motion.button
-                key={idx}
-                whileHover={{ scale: 1.05 }}
-                onClick={() => {
-                  setLanguage(snippet.lang);
-                  setCode(snippet.snippet);
-                  setOutput("");
-                  setError("");
-                }}
-                className="text-left p-3 sm:p-4 rounded-lg bg-white/5 border border-white/10 hover:border-emerald-400/50 hover:bg-emerald-400/5 transition-all"
-              >
-                <p className="text-xs sm:text-sm font-semibold text-emerald-300 mb-1">
-                  {snippet.label}
+          <div className="bg-gradient-to-r from-slate-900/50 via-blue-900/30 to-slate-900/50 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-blue-400/20">
+            {/* Footer Header */}
+            <div className="mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-300 via-cyan-300 to-emerald-300 bg-clip-text text-transparent mb-2">
+                Quick Test Examples
+              </h2>
+              <p className="text-sm text-gray-400">
+                Jump-start your coding with pre-built code snippets across multiple languages
+              </p>
+            </div>
+
+            {/* Snippets Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 mb-8">
+              {[
+                {
+                  label: "Loop Test",
+                  lang: "javascript",
+                  snippet:
+                    "for (let i = 1; i <= 5; i++) {\n  console.log('Number: ' + i);\n}",
+                  icon: "🔄",
+                },
+                {
+                  label: "Array Operation",
+                  lang: "python",
+                  snippet:
+                    "numbers = [1, 2, 3, 4, 5]\nprint('Sum:', sum(numbers))\nprint('Average:', sum(numbers) / len(numbers))",
+                  icon: "📊",
+                },
+                {
+                  label: "Conditional Logic",
+                  lang: "javascript",
+                  snippet:
+                    "const age = 25;\nif (age >= 18) {\n  console.log('Adult');\n} else {\n  console.log('Minor');\n}",
+                  icon: "❓",
+                },
+                {
+                  label: "Function Test",
+                  lang: "python",
+                  snippet:
+                    "def greet(name):\n  return f'Hello, {name}!'\n\nprint(greet('World'))",
+                  icon: "⚙️",
+                },
+                {
+                  label: "Error Handling",
+                  lang: "javascript",
+                  snippet:
+                    "try {\n  const x = 10 / 0;\n  console.log(x);\n} catch (error) {\n  console.log('Caught error:', error.message);\n}",
+                  icon: "⚠️",
+                },
+                {
+                  label: "String Manipulation",
+                  lang: "python",
+                  snippet:
+                    "text = 'Hello World'\nprint('Original:', text)\nprint('Uppercase:', text.upper())\nprint('Reversed:', text[::-1])",
+                  icon: "✨",
+                },
+              ].map((snippet, idx) => (
+                <motion.button
+                  key={idx}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setLanguage(snippet.lang);
+                    setCode(snippet.snippet);
+                    setOutput("");
+                    setError("");
+                  }}
+                  className="text-left p-4 sm:p-5 rounded-xl bg-white/8 border border-blue-400/30 hover:border-cyan-400/50 hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-cyan-500/10 transition-all group"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xl">{snippet.icon}</span>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-400/20 text-blue-200 group-hover:bg-cyan-400/30 transition-colors">
+                      {snippet.lang.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm sm:text-base font-semibold text-cyan-300 mb-1 group-hover:text-cyan-200 transition-colors">
+                    {snippet.label}
+                  </p>
+                  <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
+                    Click to load snippet
+                  </p>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Footer Info */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t border-white/10">
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-cyan-400">
+                  {Object.keys(LANGUAGES).length}+
                 </p>
-                <p className="text-xs text-gray-400">
-                  {snippet.lang.toUpperCase()}
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Languages</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-blue-400">6</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Snippets</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-emerald-400">
+                  15s
                 </p>
-              </motion.button>
-            ))}
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Timeout</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl sm:text-3xl font-bold text-purple-400">♾️</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">Tests</p>
+              </div>
+            </div>
           </div>
-        </motion.div>
+
+          {/* Bottom Footer Text */}
+          <div className="mt-6 text-center text-xs sm:text-sm text-gray-500">
+            <p>
+              💡 Pro Tip: Use these snippets to learn, test, and debug code in your preferred
+              language
+            </p>
+          </div>
+        </motion.footer>
       </div>
     </main>
   );

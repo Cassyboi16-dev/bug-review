@@ -56,11 +56,9 @@ export default function SignIn() {
 
   return (
     <main className="bg-[#050816] text-white min-h-dvh flex flex-col justify-center items-center px-4">
-
       <Toaster position="bottom-center" />
 
       <section className="w-full max-w-md flex flex-col gap-6">
-
         {/* HEADER */}
         <div className="text-center">
           <h1 className="text-4xl font-black">Welcome Back</h1>
@@ -71,7 +69,6 @@ export default function SignIn() {
 
         {/* EMAIL AUTH SECTION */}
         <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-3">
-
           <input
             type="email"
             placeholder="Email"
@@ -101,21 +98,15 @@ export default function SignIn() {
           </button>
 
           <p
-            onClick={() =>
-              setMode(mode === "login" ? "register" : "login")
-            }
+            onClick={() => setMode(mode === "login" ? "register" : "login")}
             className="text-xs text-center text-emerald-400 cursor-pointer"
           >
-            {mode === "login"
-              ? "New user? Create account"
-              : "Already have an account? Sign in"}
+            
           </p>
-
         </div>
 
         {/* CONSENT BOX */}
         <div className="flex items-start gap-3 text-xs text-gray-400 bg-white/5 border border-white/10 p-3 rounded-xl">
-
           <input
             type="checkbox"
             checked={consent}
@@ -131,14 +122,13 @@ export default function SignIn() {
             and{" "}
             <Link href="/privacy" className="text-emerald-400 hover:underline">
               Privacy Policy
-            </Link>.
+            </Link>
+            .
           </p>
-
         </div>
 
         {/* OAUTH SECTION */}
         <div className="flex flex-col gap-3">
-
           <button
             disabled={!consent}
             onClick={() => signIn("google", { callbackUrl: "/upload" })}
@@ -177,9 +167,7 @@ export default function SignIn() {
             <FaDiscord className="text-xl" />
             Continue with Discord
           </button>
-
         </div>
-
       </section>
     </main>
   );

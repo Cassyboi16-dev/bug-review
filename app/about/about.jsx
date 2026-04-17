@@ -17,9 +17,7 @@ export default function AboutUs() {
 
   return (
     <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white px-4 py-16 flex justify-center">
-
       <div className="max-w-5xl w-full flex flex-col gap-16">
-
         {/* HERO */}
         <motion.section
           className="text-center space-y-4"
@@ -53,10 +51,10 @@ export default function AboutUs() {
               What We Do
             </h2>
             <p className="text-gray-400">
-              Bug Review is a community-driven platform where users share errors,
-              debug code, and learn from real-world technical issues. From simple
-              bugs to complex system failures, we provide a space to ask, solve,
-              and grow.
+              Bug Review is a community-driven platform where users share
+              errors, debug code, and learn from real-world technical issues.
+              From simple bugs to complex system failures, we provide a space to
+              ask, solve, and grow.
             </p>
           </motion.div>
 
@@ -126,7 +124,10 @@ export default function AboutUs() {
               <motion.span
                 key={index}
                 className="px-4 py-2 bg-white/5 border border-white/10 rounded-full"
-                whileHover={{ scale: 1.05, backgroundColor: "rgba(16,185,129,0.2)" }}
+                whileHover={{
+                  scale: 1.05,
+                  backgroundColor: "rgba(16,185,129,0.2)",
+                }}
                 transition={{ duration: 0.3 }}
               >
                 {item}
@@ -148,12 +149,30 @@ export default function AboutUs() {
 
           <div className="grid md:grid-cols-2 gap-6 text-gray-400">
             {[
-              { title: "Chat Rooms", desc: "Topic-based discussions for focused conversations." },
-              { title: "Communities", desc: "Controlled spaces with structured content flow." },
-              { title: "Search & Filters", desc: "Find exactly what you need without distractions." },
-              { title: "Messages & DMs", desc: "Stay updated and connect with others." },
-              { title: "Profiles", desc: "Verified users and transparent identity system." },
-              { title: "PeerGroups", desc: "Age-based private groups with safety moderation." },
+              {
+                title: "Chat Rooms",
+                desc: "Topic-based discussions for focused conversations.",
+              },
+              {
+                title: "Communities",
+                desc: "Controlled spaces with structured content flow.",
+              },
+              {
+                title: "Search & Filters",
+                desc: "Find exactly what you need without distractions.",
+              },
+              {
+                title: "Messages & DMs",
+                desc: "Stay updated and connect with others.",
+              },
+              {
+                title: "Profiles",
+                desc: "Verified users and transparent identity system.",
+              },
+              {
+                title: "PeerGroups",
+                desc: "Age-based private groups with safety moderation.",
+              },
             ].map((feature, index) => (
               <motion.div
                 key={index}
@@ -198,7 +217,7 @@ export default function AboutUs() {
             Ready to fix your next bug?
           </h2>
 
-          <Link 
+          <Link
             className="px-6 py-3 bg-emerald-500 text-black font-semibold rounded-lg hover:bg-emerald-400 transition"
             whilehover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -212,6 +231,27 @@ export default function AboutUs() {
           </p>
         </motion.section>
 
+        {/* PAGE COMMENTS */}
+        <motion.section
+          className="w-full"
+          variants={sectionVariant}
+          initial="hidden"
+          whileInView="visible"
+        >
+          {session ? (
+            <PageComments pageId="about" session={session} />
+          ) : (
+            <div className="text-center space-y-4">
+              <p className="text-text-muted">Sign in to leave a comment</p>
+              <Link
+                href="/signin"
+                className="inline-block bg-emerald-500 text-black font-semibold px-6 py-3 rounded-lg hover:bg-emerald-400 transition"
+              >
+                Sign In to Comment
+              </Link>
+            </div>
+          )}
+        </motion.section>
       </div>
     </main>
   );
