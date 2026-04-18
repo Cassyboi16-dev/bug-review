@@ -146,7 +146,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/signin"
-              className="text-gray-300 hover:text-white flex items-center gap-1"
+              className="text-gray-300 hover:text-emerald-400 hover:border-b-2 pb-2 border-transparent hover:border-emerald-400 flex items-center gap-1"
             >
               <PiUser />
               Sign in

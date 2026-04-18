@@ -64,7 +64,7 @@ export default function Footer() {
             Built for developers • Powered by NextJS & Firebase
           </p>
 
-          <p className="text-text-muted">Email:cassyboi16@proton.me</p>
+          <p className="text-text-muted">Email : cassyboi16@proton.me</p>
         </div>
       </div>
     </footer>
