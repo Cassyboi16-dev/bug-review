@@ -12,15 +12,12 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-surface text-foreground border-t border-border mt-10 dark:bg-[#050816] dark:text-white dark:border-white/10">
-
+    <footer className="bg-surface text-foreground border-t border-border mt-10">
       {/* MAIN CONTAINER */}
       <div className="max-w-5xl mx-auto px-6 py-10">
-
         {/* TOP SECTION */}
         <div className="flex flex-col items-center text-center gap-3">
-
-          <div className="p-2 rounded-full bg-white/5 border border-white/10">
+          <div className="p-2 rounded-full bg-surface-muted border border-border">
             <Image
               src={"/bug.png"}
               alt="logo"
@@ -30,12 +27,11 @@ export default function Footer() {
             />
           </div>
 
-          <h1 className="text-lg font-semibold tracking-wide">
-            BugReview
-          </h1>
+          <h1 className="text-lg font-semibold tracking-wide">BugReview</h1>
 
-          <p className="text-xs text-gray-400 max-w-md">
-            A community-driven space where developers share bugs, tutorials, and insights.
+          <p className="text-xs text-text-muted max-w-md">
+            A community-driven space where developers share bugs, tutorials, and
+            insights.
           </p>
         </div>
 
@@ -45,7 +41,7 @@ export default function Footer() {
             <Link
               key={index}
               href={item.url}
-              className="text-gray-400 hover:text-white transition hover:underline underline-offset-4"
+              className="text-text-muted hover:text-foreground transition hover:underline underline-offset-4"
             >
               {item.label}
             </Link>
@@ -54,27 +50,22 @@ export default function Footer() {
 
         {/* SOCIALS */}
         <div className="flex items-center justify-center gap-5 mt-8">
-
           <SocialIcon icon={<FaXTwitter />} />
           <SocialIcon icon={<FaInstagram />} />
           <SocialIcon icon={<FaDiscord />} />
           <SocialIcon icon={<IoLogoGithub />} />
-
         </div>
 
         {/* BOTTOM BAR */}
-        <div className="mt-10 border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-gray-500 gap-2">
-
+        <div className="mt-10 border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-text-muted gap-2">
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
 
           <p className="text-slate-600 dark:text-gray-400">
             Built for developers • Powered by NextJS & Firebase
           </p>
 
-          <p className="text-slate-600 dark:text-gray-400">Email:cassyboi16@proton.me</p>
-
+          <p className="text-text-muted">Email:cassyboi16@proton.me</p>
         </div>
-
       </div>
     </footer>
   );
@@ -83,8 +74,8 @@ export default function Footer() {
 /* Reusable Social Icon */
 function SocialIcon({ icon }) {
   return (
-    <div className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 hover:scale-110 transition cursor-pointer">
-      <div className="text-lg text-gray-300 hover:text-white transition">
+    <div className="p-2 rounded-full bg-surface-muted border border-border hover:bg-background hover:scale-110 transition cursor-pointer">
+      <div className="text-lg text-text-muted hover:text-foreground transition">
         {icon}
       </div>
     </div>

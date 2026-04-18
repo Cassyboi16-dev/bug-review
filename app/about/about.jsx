@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function AboutUs() {
+  const { data: session } = useSession();
   const sectionVariant = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -16,9 +18,8 @@ export default function AboutUs() {
   };
 
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white px-4 py-16 flex justify-center">
+    <main className="min-h-dvh bg-background text-foreground px-4 py-16 flex justify-center">
       <div className="max-w-5xl w-full flex flex-col gap-16">
-        {/* HERO */}
         <motion.section
           className="text-center space-y-4"
           variants={sectionVariant}
@@ -27,18 +28,17 @@ export default function AboutUs() {
           viewport={{ once: true }}
         >
           <motion.h1
-            className="text-4xl md:text-6xl font-extrabold text-emerald-400 tracking-widest"
+            className="text-4xl md:text-6xl font-extrabold text-primary-500 tracking-widest"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1, transition: { duration: 0.8 } }}
           >
             {"<About BugReview />"}
           </motion.h1>
-          <motion.p className="text-gray-400 max-w-2xl mx-auto">
+          <motion.p className="text-text-muted max-w-2xl mx-auto">
             The platform where bugs are not just solved — they are understood.
           </motion.p>
         </motion.section>
 
-        {/* WHAT WE DO */}
         <motion.section
           className="grid md:grid-cols-2 gap-10 items-center"
           variants={sectionVariant}
@@ -47,10 +47,10 @@ export default function AboutUs() {
           viewport={{ once: true }}
         >
           <motion.div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-emerald-300">
+            <h2 className="text-2xl font-semibold text-primary-500">
               What We Do
             </h2>
-            <p className="text-gray-400">
+            <p className="text-text-muted">
               Bug Review is a community-driven platform where users share
               errors, debug code, and learn from real-world technical issues.
               From simple bugs to complex system failures, we provide a space to
@@ -59,7 +59,7 @@ export default function AboutUs() {
           </motion.div>
 
           <motion.div
-            className="bg-white/5 border border-white/10 rounded-xl p-6 font-mono text-sm text-gray-300"
+            className="bg-surface-muted border border-border rounded-xl p-6 font-mono text-sm text-foreground"
             variants={cardVariant}
             initial="hidden"
             whileInView="visible"
@@ -67,11 +67,10 @@ export default function AboutUs() {
           >
             <p>{"// example"}</p>
             <p>{"Error: Cannot read property 'map' of undefined"}</p>
-            <p className="text-emerald-400">{"> solution found ✔"}</p>
+            <p className="text-emerald-600">{"> solution found ✔"}</p>
           </motion.div>
         </motion.section>
 
-        {/* WHY WE EXIST */}
         <motion.section
           className="space-y-4"
           variants={sectionVariant}
@@ -79,10 +78,10 @@ export default function AboutUs() {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <h2 className="text-2xl font-semibold text-emerald-300">
+          <h2 className="text-2xl font-semibold text-primary-500">
             Why We Exist
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 text-gray-400">
+          <div className="grid md:grid-cols-3 gap-6 text-text-muted">
             {[
               "Solve real-world errors across devices and platforms",
               "Help users build practical tech understanding",
@@ -102,15 +101,14 @@ export default function AboutUs() {
           </div>
         </motion.section>
 
-        {/* WHO IT'S FOR */}
         <motion.section
           className="space-y-4"
           variants={sectionVariant}
           initial="hidden"
           whileInView="visible"
         >
-          <h2 className="text-2xl font-semibold text-emerald-300">
-            Who It’s For
+          <h2 className="text-2xl font-semibold text-primary-500">
+            Who It's For
           </h2>
 
           <div className="flex flex-wrap gap-3 text-sm">
@@ -123,10 +121,11 @@ export default function AboutUs() {
             ].map((item, index) => (
               <motion.span
                 key={index}
-                className="px-4 py-2 bg-white/5 border border-white/10 rounded-full"
+                className="px-4 py-2 bg-surface-muted border border-border rounded-full"
                 whileHover={{
                   scale: 1.05,
-                  backgroundColor: "rgba(16,185,129,0.2)",
+                  backgroundColor: "var(--primary-500)",
+                  color: "white",
                 }}
                 transition={{ duration: 0.3 }}
               >
@@ -136,18 +135,17 @@ export default function AboutUs() {
           </div>
         </motion.section>
 
-        {/* FEATURES */}
         <motion.section
           className="space-y-6"
           variants={sectionVariant}
           initial="hidden"
           whileInView="visible"
         >
-          <h2 className="text-2xl font-semibold text-emerald-300">
+          <h2 className="text-2xl font-semibold text-primary-500">
             Core Features
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-6 text-gray-400">
+          <div className="grid md:grid-cols-2 gap-6 text-text-muted">
             {[
               {
                 title: "Chat Rooms",
@@ -176,7 +174,7 @@ export default function AboutUs() {
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                className="bg-white/5 p-5 rounded-xl border border-white/10"
+                className="bg-surface-muted p-5 rounded-xl border border-border"
                 variants={cardVariant}
                 initial="hidden"
                 whileInView="visible"
@@ -189,25 +187,23 @@ export default function AboutUs() {
           </div>
         </motion.section>
 
-        {/* TRUST / SAFETY */}
         <motion.section
           className="space-y-4"
           variants={sectionVariant}
           initial="hidden"
           whileInView="visible"
         >
-          <h2 className="text-2xl font-semibold text-emerald-300">
+          <h2 className="text-2xl font-semibold text-primary-500">
             Safety & Trust
           </h2>
-          <p className="text-gray-400">
+          <p className="text-text-muted">
             We prioritize user safety through moderation systems, verified
             identities, and structured control over communities. PeerGroups are
             reviewed to ensure a secure and respectful environment.
           </p>
         </motion.section>
 
-        {/* CTA */}
-        <motion.section
+        <motion.section 
           className="text-center space-y-4"
           variants={sectionVariant}
           initial="hidden"
@@ -218,7 +214,7 @@ export default function AboutUs() {
           </h2>
 
           <Link
-            className="px-6 py-3 bg-emerald-500 text-black font-semibold rounded-lg hover:bg-emerald-400 transition"
+            className="px-6 py-3 bg-primary-500 text-white font-semibold rounded-lg hover:bg-primary-600 transition"
             whilehover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             href="/signin"
@@ -229,28 +225,6 @@ export default function AboutUs() {
           <p className="text-xs text-gray-500 font-mono mt-6">
             {"// build. break. fix. repeat."}
           </p>
-        </motion.section>
-
-        {/* PAGE COMMENTS */}
-        <motion.section
-          className="w-full"
-          variants={sectionVariant}
-          initial="hidden"
-          whileInView="visible"
-        >
-          {session ? (
-            <PageComments pageId="about" session={session} />
-          ) : (
-            <div className="text-center space-y-4">
-              <p className="text-text-muted">Sign in to leave a comment</p>
-              <Link
-                href="/signin"
-                className="inline-block bg-emerald-500 text-black font-semibold px-6 py-3 rounded-lg hover:bg-emerald-400 transition"
-              >
-                Sign In to Comment
-              </Link>
-            </div>
-          )}
         </motion.section>
       </div>
     </main>

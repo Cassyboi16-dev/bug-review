@@ -33,14 +33,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       privateKey: process.env.AUTH_FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
     }),
   }),
+  allowDangerousEmailAccountLinking: true,
   callbacks: {
-    async signIn({ user, isNewUser }) {
-      if (isNewUser && user.id) {
-        // Generate default username for first-time users
-        user.username = generateDefaultUsername();
-      }
-      return true;
-    },
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;

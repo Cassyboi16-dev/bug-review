@@ -9,14 +9,6 @@ import Link from "next/link";
 
 import toast, { Toaster } from "react-hot-toast";
 
-// Firebase Auth
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
-
-import { auth } from "@/config/firebase.config";
-
 export default function SignIn() {
   const [consent, setConsent] = useState(false);
 
@@ -38,43 +30,28 @@ export default function SignIn() {
   // =========================
   const handleEmailAuth = async () => {
     if (!consent) return;
-
-    try {
-      if (mode === "login") {
-        await signInWithEmailAndPassword(auth, email, password);
-        toast.success("Welcome back 👋");
-      } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-        toast.success("Account created 🚀");
-      }
-
-      router.push("/explore");
-    } catch (err) {
-      toast.error(err.message);
-    }
+    toast.info("Email/password auth disabled. Use OAuth instead.");
   };
 
   return (
-    <main className="bg-[#050816] text-white min-h-dvh flex flex-col justify-center items-center px-4">
+    <main className="bg-background text-foreground min-h-dvh flex flex-col justify-center items-center px-4">
       <Toaster position="bottom-center" />
 
       <section className="w-full max-w-md flex flex-col gap-6">
-        {/* HEADER */}
         <div className="text-center">
-          <h1 className="text-4xl font-black">Welcome Back</h1>
-          <p className="text-white/70 mt-2 text-sm">
+          <h1 className="text-4xl font-black text-primary-500">Welcome Back</h1>
+          <p className="text-text-muted mt-2 text-sm">
             Sign in to continue sharing and solving bugs
           </p>
         </div>
 
-        {/* EMAIL AUTH SECTION */}
-        <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-3">
+        <div className="bg-surface border border-border p-4 rounded-xl flex flex-col gap-3">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded-lg bg-white text-black"
+            className="p-3 rounded-lg bg-background text-foreground border border-border focus:border-primary-500 outline-none"
           />
 
           <input
@@ -82,7 +59,7 @@ export default function SignIn() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="p-3 rounded-lg bg-white text-black"
+            className="p-3 rounded-lg bg-background text-foreground border border-border focus:border-primary-500 outline-none"
           />
 
           <button
@@ -90,8 +67,8 @@ export default function SignIn() {
             onClick={handleEmailAuth}
             className={`py-3 rounded-xl font-semibold transition ${
               consent
-                ? "bg-emerald-500 hover:bg-emerald-600"
-                : "bg-gray-600 cursor-not-allowed"
+                ? "bg-primary-500 text-white hover:bg-primary-600"
+                : "bg-surface-muted text-foreground cursor-not-allowed opacity-50"
             }`}
           >
             {mode === "login" ? "Sign In" : "Create Account"}
@@ -99,43 +76,43 @@ export default function SignIn() {
 
           <p
             onClick={() => setMode(mode === "login" ? "register" : "login")}
-            className="text-xs text-center text-emerald-400 cursor-pointer"
+            className="text-xs text-center text-primary-500 cursor-pointer hover:underline"
           >
-            
+            {mode === "login"
+              ? "Don't have an account? Create one"
+              : "Already have an account? Sign in"}
           </p>
         </div>
 
-        {/* CONSENT BOX */}
-        <div className="flex items-start gap-3 text-xs text-gray-400 bg-white/5 border border-white/10 p-3 rounded-xl">
+        <div className="flex items-start gap-3 text-xs text-text-muted bg-surface border border-border p-3 rounded-xl">
           <input
             type="checkbox"
             checked={consent}
             onChange={() => setConsent(!consent)}
-            className="mt-1 accent-emerald-500"
+            className="mt-1 accent-primary-500"
           />
 
           <p>
             I agree to the{" "}
-            <Link href="/terms" className="text-emerald-400 hover:underline">
+            <Link href="/terms" className="text-primary-500 hover:underline">
               Terms & Conditions
             </Link>{" "}
             and{" "}
-            <Link href="/privacy" className="text-emerald-400 hover:underline">
+            <Link href="/privacy" className="text-primary-500 hover:underline">
               Privacy Policy
             </Link>
             .
           </p>
         </div>
 
-        {/* OAUTH SECTION */}
         <div className="flex flex-col gap-3">
           <button
             disabled={!consent}
             onClick={() => signIn("google", { callbackUrl: "/upload" })}
-            className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition ${
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold transition ${
               consent
-                ? "hover:border-emerald-400"
-                : "opacity-40 cursor-not-allowed"
+                ? "bg-surface text-foreground border-border hover:border-primary-500 hover:bg-surface-muted"
+                : "opacity-40 cursor-not-allowed bg-surface-muted"
             }`}
           >
             <FcGoogle className="text-xl" />
@@ -145,10 +122,10 @@ export default function SignIn() {
           <button
             disabled={!consent}
             onClick={() => signIn("github", { callbackUrl: "/upload" })}
-            className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition ${
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold transition ${
               consent
-                ? "hover:border-emerald-400"
-                : "opacity-40 cursor-not-allowed"
+                ? "bg-surface text-foreground border-border hover:border-primary-500 hover:bg-surface-muted"
+                : "opacity-40 cursor-not-allowed bg-surface-muted"
             }`}
           >
             <FaGithub className="text-xl" />
@@ -158,10 +135,10 @@ export default function SignIn() {
           <button
             disabled={!consent}
             onClick={() => signIn("discord", { callbackUrl: "/upload" })}
-            className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition ${
+            className={`flex items-center justify-center gap-2 py-3 rounded-xl border font-semibold transition ${
               consent
-                ? "hover:border-emerald-400"
-                : "opacity-40 cursor-not-allowed"
+                ? "bg-surface text-foreground border-border hover:border-primary-500 hover:bg-surface-muted"
+                : "opacity-40 cursor-not-allowed bg-surface-muted"
             }`}
           >
             <FaDiscord className="text-xl" />

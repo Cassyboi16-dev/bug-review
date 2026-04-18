@@ -20,14 +20,12 @@ import {
   FiBookmark,
   FiShare2,
   FiCopy,
-  FiMessageCircle,
   FiEye,
   FiThumbsDown,
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
 import { BsBookmarkFill } from "react-icons/bs";
 import { HiTrendingUp } from "react-icons/hi";
-import CommentSystem from "@/Components/CommentSystem";
 
 export default function Explore({ session }) {
   const userId = session?.user?.id || session?.user?.email || "anonymous";
@@ -40,9 +38,6 @@ export default function Explore({ session }) {
   const [sortMode, setSortMode] = useState("recent");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
-  // =========================
-  // REALTIME FEED
-  // =========================
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "bugPosts"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -56,23 +51,17 @@ export default function Explore({ session }) {
     return () => unsub();
   }, []);
 
-  // =========================
-  // SAFE TIMESTAMP PARSER
-  // =========================
   const getDateObj = (timestamp) => {
     if (!timestamp) return null;
 
-    // Firestore Timestamp
     if (typeof timestamp === "object") {
       return timestamp.toDate();
     }
 
-    // number (ms)
     if (typeof timestamp === "number") {
       return new Date(timestamp);
     }
 
-    // string fallback
     if (typeof timestamp === "string") {
       const parsed = Number(timestamp);
       return isNaN(parsed) ? null : new Date(parsed);
@@ -81,9 +70,6 @@ export default function Explore({ session }) {
     return null;
   };
 
-  // =========================
-  // FORMAT RELATIVE TIME
-  // =========================
   const getRelativeTime = (dateObj) => {
     if (!dateObj) return "Just now";
 
@@ -443,17 +429,13 @@ export default function Explore({ session }) {
                           <FiHeart className="w-4 h-4" />
                           <span>{post.likedBy?.length || 0}</span>
                         </button>
-                        <button className="flex items-center gap-1 hover:text-primary-400 transition">
-                          <FiMessageCircle className="w-4 h-4" />
-                          <span>{post.comments?.length || 0}</span>
-                        </button>
+
                         <button className="flex items-center gap-1 hover:text-primary-500 transition">
                           <FiShare2 className="w-4 h-4" />
                           <span>{post.shares || 0}</span>
                         </button>
                       </div>
 
-                      {/* POST ACTIONS */}
                       <div className="flex gap-2 pt-2 border-t border-border">
                         <motion.button
                           whileTap={{ scale: 0.95 }}
@@ -495,7 +477,6 @@ export default function Explore({ session }) {
                         </motion.button>
                       </div>
 
-                      {/* COMMENTS PREVIEW */}
                       {post.comments && post.comments.length > 0 && (
                         <div className="bg-background rounded-lg p-3 border border-border/50 space-y-2">
                           <p className="text-xs font-semibold text-text-muted">
@@ -518,19 +499,6 @@ export default function Explore({ session }) {
                           )}
                         </div>
                       )}
-
-                      {/* FULL COMMENT SYSTEM */}
-                      <div className="border-t border-border pt-4">
-                        <CommentSystem
-                          post={post}
-                          session={session}
-                          onCommentAdded={() => {}}
-                          onReplyAdded={() => {}}
-                          onCommentDeleted={() => {}}
-                          getRelativeTime={getRelativeTime}
-                          getDateObj={getDateObj}
-                        />
-                      </div>
                     </motion.div>
                   );
                 })}
@@ -538,7 +506,6 @@ export default function Explore({ session }) {
             </div>
           ) : (
             <div className="bg-surface border border-border rounded-lg p-12 text-center space-y-3">
-              <FiMessageCircle className="w-12 h-12 text-text-muted mx-auto opacity-50" />
               <p className="text-text-muted">
                 No posts found. Check back later!
               </p>

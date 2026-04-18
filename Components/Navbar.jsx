@@ -27,11 +27,9 @@ export default function Navbar() {
 
   const extraLinks = [
     { label: "About", url: "/about" },
-    { label: "Code Tester", url: "/debug" },
     { label: "Post Bug", url: "/upload" },
   ];
 
-  // 🔥 CLOSE DROPDOWN ON OUTSIDE CLICK
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (moreRef.current && !moreRef.current.contains(event.target)) {
@@ -61,7 +59,8 @@ export default function Navbar() {
       window.dispatchEvent(new CustomEvent("theme-change", { detail: value }));
     };
 
-    const storedTheme = window.localStorage.getItem("bugreview-theme") || "system";
+    const storedTheme =
+      window.localStorage.getItem("bugreview-theme") || "system";
     setTheme(storedTheme);
     applyTheme(storedTheme);
   }, []);
@@ -73,15 +72,16 @@ export default function Navbar() {
     root.classList.remove("light", "dark");
     root.classList.add(nextTheme);
     window.localStorage.setItem("bugreview-theme", nextTheme);
-    window.dispatchEvent(new CustomEvent("theme-change", { detail: nextTheme }));
+    window.dispatchEvent(
+      new CustomEvent("theme-change", { detail: nextTheme }),
+    );
   };
 
   if (status === "loading") return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--surface)]/90 dark:bg-[#050816]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border bg-surface backdrop-blur-xl">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        {/* LOGO */}
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/bug.png"
@@ -90,38 +90,36 @@ export default function Navbar() {
             height={32}
             className="rounded-md border border-white/10"
           />
-          <span className="text-slate-900 dark:text-white font-semibold">BugReview</span>
+          <span className="text-foreground font-semibold">BugReview</span>
         </Link>
 
-        {/* DESKTOP NAV */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-gray-300">
+        <nav className="hidden md:flex items-center gap-6 text-sm text-text-muted">
           {mainLinks.map((item) => (
             <Link
               key={item.label}
               href={item.url}
-              className="hover:text-white transition"
+              className="hover:text-emerald-400 transition"
             >
               {item.label}
             </Link>
           ))}
 
-          {/* MORE DROPDOWN */}
           <div className="relative" ref={moreRef}>
             <button
               onClick={() => setMoreOpen(!moreOpen)}
-              className="hover:text-white transition"
+              className="hover:text-foreground transition"
             >
               More
             </button>
 
             {moreOpen && (
-              <div className="absolute top-8 right-0 w-40 bg-surface dark:bg-[#0a0f2c] border border-border rounded-xl p-2 flex flex-col gap-1">
+              <div className="absolute top-8 right-0 w-40 bg-surface border border-border rounded-xl p-2 flex flex-col gap-1">
                 {extraLinks.map((item) => (
                   <Link
                     key={item.label}
                     href={item.url}
-                    onClick={() => setMoreOpen(false)} // 🔥 CLOSE ON CLICK
-                    className="text-sm text-gray-300 hover:text-white hover:bg-white/5 px-2 py-1 rounded"
+                    onClick={() => setMoreOpen(false)}
+                    className="text-sm text-text-muted hover:text-foreground hover:bg-background px-2 py-1 rounded transition"
                   >
                     {item.label}
                   </Link>
@@ -131,11 +129,10 @@ export default function Navbar() {
           </div>
         </nav>
 
-        {/* RIGHT SIDE */}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleTheme}
-            className="hidden sm:inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-2 text-gray-300 hover:bg-white/10 transition"
+            className="hidden sm:inline-flex items-center justify-center rounded-lg border border-border bg-surface-muted p-2 text-text-muted hover:bg-background transition"
             aria-label="Toggle site theme"
             title="Toggle site theme"
           >

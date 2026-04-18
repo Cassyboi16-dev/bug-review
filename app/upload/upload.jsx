@@ -21,6 +21,7 @@ export default function UploadClient({ session }) {
   const [status, setStatus] = useState("idle");
   const [country, setCountry] = useState("");
   const [locationLoading, setLocationLoading] = useState(true);
+  const [showEmptyPopup, setShowEmptyPopup] = useState(false);
 
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
@@ -82,11 +83,11 @@ export default function UploadClient({ session }) {
   });
 
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f0f1e] to-[#050816] text-white px-4 py-12 flex justify-center items-center">
+    <main className="min-h-dvh bg-background text-foreground px-4 py-12 flex justify-center items-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl border border-white/20 rounded-3xl p-8 md:p-12 shadow-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg"
+        className="w-full max-w-2xl border border-border rounded-3xl p-8 md:p-12 shadow-2xl bg-surface"
       >
         <motion.div
           initial={{ opacity: 0 }}
@@ -94,10 +95,10 @@ export default function UploadClient({ session }) {
           transition={{ delay: 0.2 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold text-primary-500 mb-3">
             Report a Bug
           </h1>
-          <p className="text-gray-400">
+          <p className="text-text-muted">
             Share your bug, get solutions, help the community
           </p>
         </motion.div>
@@ -107,6 +108,18 @@ export default function UploadClient({ session }) {
           validationSchema={formValid}
           enableReinitialize
           onSubmit={async (values, { resetForm }) => {
+            const hasEmptyFields =
+              !values.title.trim() ||
+              !values.description.trim() ||
+              !values.category.trim() ||
+              !values.country.trim();
+
+            if (hasEmptyFields) {
+              setShowEmptyPopup(true);
+              errorAudioRef.current?.play();
+              return;
+            }
+
             try {
               setStatus("loading");
 
@@ -146,21 +159,28 @@ export default function UploadClient({ session }) {
             }
           }}
         >
-          <Form className="flex flex-col gap-8">
+          <Form
+            className="flex flex-col gap-8"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.currentTarget.querySelector('button[type="submit"]')?.click();
+              }
+            }}
+          >
             {/* Author Info */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 bg-white/5 rounded-2xl p-4 border border-white/10"
+              className="flex items-center gap-4 bg-surface-muted rounded-2xl p-4 border border-border"
             >
               <img
                 src={authorImg}
-                className="w-14 h-14 rounded-full object-cover ring-2 ring-emerald-400"
+                className="w-14 h-14 rounded-full object-cover ring-2 ring-primary-500"
               />
               <div>
-                <p className="font-semibold text-white">{author}</p>
-                <p className="text-xs text-gray-400">{datestamp}</p>
+                <p className="font-semibold text-foreground">{author}</p>
+                <p className="text-xs text-text-muted">{datestamp}</p>
               </div>
             </motion.div>
 
@@ -170,13 +190,13 @@ export default function UploadClient({ session }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.35 }}
             >
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Bug Title
               </label>
               <Field
                 name="title"
                 placeholder="e.g., React component not re-rendering on state change"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500"
+                className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary-500 focus:bg-surface-muted transition-all outline-none text-foreground placeholder-text-muted"
               />
               <ErrorMessage
                 name="title"
@@ -191,7 +211,7 @@ export default function UploadClient({ session }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <label className="block text-sm font-semibold text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Description
               </label>
               <Field name="description">
@@ -201,7 +221,7 @@ export default function UploadClient({ session }) {
                     onInput={autoResize}
                     placeholder="Describe your bug, steps to reproduce, expected vs actual behavior..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500 resize-none"
+                    className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary-500 focus:bg-surface-muted transition-all outline-none text-foreground placeholder-text-muted resize-none"
                   />
                 )}
               </Field>
@@ -221,13 +241,13 @@ export default function UploadClient({ session }) {
             >
               {/* Category */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-semibold text-foreground mb-2">
                   Category
                 </label>
                 <Field
                   name="category"
                   placeholder="e.g., Frontend, Backend, Database"
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500"
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary-500 focus:bg-surface-muted transition-all outline-none text-foreground placeholder-text-muted"
                 />
                 <ErrorMessage
                   name="category"
@@ -238,10 +258,10 @@ export default function UploadClient({ session }) {
 
               {/* Country */}
               <div>
-                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                <label className="block text-sm font-semibold text-foreground mb-2">
                   Location
                   {locationLoading && (
-                    <span className="text-gray-400 text-xs ml-2">
+                    <span className="text-text-muted text-xs ml-2">
                       (detecting...)
                     </span>
                   )}
@@ -251,7 +271,7 @@ export default function UploadClient({ session }) {
                   placeholder={
                     locationLoading ? "Detecting..." : "Your country"
                   }
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-emerald-400 focus:bg-white/10 transition-all outline-none text-white placeholder-gray-500 disabled:opacity-50"
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:border-primary-500 focus:bg-surface-muted transition-all outline-none text-foreground placeholder-text-muted disabled:opacity-50"
                   disabled={locationLoading}
                 />
                 <ErrorMessage
@@ -271,7 +291,7 @@ export default function UploadClient({ session }) {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={status === "loading"}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-400 to-blue-400 text-black font-semibold px-8 py-3 rounded-full hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-200 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 bg-primary-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-primary-600 transition-all duration-200 disabled:opacity-50"
             >
               <GrUploadOption className="text-lg" />
               {status === "loading" ? "Posting..." : "Post Bug Report"}
@@ -285,22 +305,55 @@ export default function UploadClient({ session }) {
 
       <AnimatePresence>
         {status !== "idle" && (
-          <motion.div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-            {status === "loading" && <p>Posting...</p>}
+          <motion.div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            {status === "loading" && (
+              <p className="text-foreground">Posting...</p>
+            )}
 
             {status === "success" && (
-              <div className="text-emerald-400 text-2xl flex flex-col items-center">
+              <div className="text-emerald-500 text-2xl flex flex-col items-center">
                 <GiCheckMark className="text-5xl" />
                 Bug Posted Successfully
               </div>
             )}
 
             {status === "error" && (
-              <div className="text-red-400 text-2xl flex flex-col items-center">
+              <div className="text-red-500 text-2xl flex flex-col items-center">
                 <MdErrorOutline className="text-5xl" />
-                Failed to Post
+                Nothing To Post
               </div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showEmptyPopup && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
+            onClick={() => setShowEmptyPopup(false)}
+          >
+            <motion.div
+              className="bg-surface border border-border rounded-2xl p-8 text-center space-y-4 max-w-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MdErrorOutline className="text-5xl text-red-500 mx-auto" />
+              <h2 className="text-2xl font-bold text-foreground">
+                Nothing To Post
+              </h2>
+              <p className="text-text-muted">
+                Please fill in all required fields to post a bug report.
+              </p>
+              <button
+                onClick={() => setShowEmptyPopup(false)}
+                className="bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition"
+              >
+                OK
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
