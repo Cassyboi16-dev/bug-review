@@ -27,6 +27,82 @@ import { AiFillHeart } from "react-icons/ai";
 import { BsBookmarkFill } from "react-icons/bs";
 import { HiTrendingUp } from "react-icons/hi";
 
+const COUNTRY_CODES = {
+  nigeria: "NG",
+  "united states": "US",
+  usa: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  canada: "CA",
+  india: "IN",
+  germany: "DE",
+  france: "FR",
+  spain: "ES",
+  italy: "IT",
+  netherlands: "NL",
+  belgium: "BE",
+  switzerland: "CH",
+  sweden: "SE",
+  norway: "NO",
+  denmark: "DK",
+  finland: "FI",
+  poland: "PL",
+  russia: "RU",
+  ukraine: "UA",
+  japan: "JP",
+  china: "CN",
+  "south korea": "KR",
+  australia: "AU",
+  "new zealand": "NZ",
+  brazil: "BR",
+  mexico: "MX",
+  argentina: "AR",
+  "south africa": "ZA",
+  egypt: "EG",
+  kenya: "KE",
+  ghana: "GH",
+  singapore: "SG",
+  malaysia: "MY",
+  thailand: "TH",
+  vietnam: "VN",
+  philippines: "PH",
+  indonesia: "ID",
+  pakistan: "PK",
+  bangladesh: "BD",
+  turkey: "TR",
+  "saudi arabia": "SA",
+  uae: "AE",
+  "united arab emirates": "AE",
+  israel: "IL",
+  greece: "GR",
+  portugal: "PT",
+  ireland: "IE",
+  austria: "AT",
+  "czech republic": "CZ",
+  czechia: "CZ",
+  hungary: "HU",
+  romania: "RO",
+  serbia: "RS",
+  croatia: "HR",
+  slovenia: "SI",
+  chile: "CL",
+  colombia: "CO",
+  peru: "PE",
+  venezuela: "VE",
+  ecuador: "EC",
+  bolivia: "BO",
+  paraguay: "PY",
+  uruguay: "UY",
+};
+
+const toFlagEmoji = (countryCode) =>
+  countryCode
+    .toUpperCase()
+    .replace(
+      /./g,
+      (char) => String.fromCodePoint(127397 + char.charCodeAt(0)),
+    );
+
 export default function Explore({ session }) {
   const userId = session?.user?.id || session?.user?.email || "anonymous";
   const userUsername =
@@ -88,6 +164,23 @@ export default function Explore({ session }) {
   // GET COUNTRY FLAG
   // =========================
   const getCountryFlag = (countryName) => {
+    if (!countryName || countryName === "Unknown") {
+      return String.fromCodePoint(0x1f30d);
+    }
+
+    const normalizedCountry = countryName.trim().toLowerCase();
+
+    if (/^[a-z]{2}$/i.test(normalizedCountry)) {
+      return toFlagEmoji(normalizedCountry);
+    }
+
+    const countryCode = COUNTRY_CODES[normalizedCountry];
+    if (countryCode) {
+      return toFlagEmoji(countryCode);
+    }
+
+    return String.fromCodePoint(0x1f30d);
+
     if (!countryName || countryName === "Unknown") return "🌍";
 
     // Map of countries to their flag emojis
