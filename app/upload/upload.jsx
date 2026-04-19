@@ -96,7 +96,7 @@ export default function UploadClient({ session }) {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold text-primary-500 mb-3">
-            Report a Bug
+            Share Your Bug
           </h1>
           <p className="text-text-muted">
             Share your bug, get solutions, help the community

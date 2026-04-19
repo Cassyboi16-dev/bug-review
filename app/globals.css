@@ -17,7 +17,7 @@
   --primary-100: #e0f2fe;
   --primary-400: #38bdf8;
   --primary-500: #0ea5e9;
-  --primary-600: #0284c7;
+  --primary-600: #5bc702;
 
   /* Accent Colors */
   --accent-400: #fbbf24;
@@ -28,21 +28,21 @@
 html.dark {
   color-scheme: dark;
   /* Dark Mode */
-  --background: #050816;
+  --background: #11193b;
   --foreground: #e2e8f0;
   --surface: #0d1224;
   --surface-muted: #111827;
-  --border: rgba(255, 255, 255, 0.12);
+  --border: rgba(206, 194, 194, 0.733);
   --text-muted: #94a3b8;
-  --card: rgba(15, 23, 42, 0.96);
+  --card: rgba(48, 182, 7, 0.96);
   --border-muted: rgba(255, 255, 255, 0.08);
 
   /* Primary Colors */
-  --primary-50: #0f172a;
-  --primary-100: #1e293b;
-  --primary-400: #38bdf8;
-  --primary-500: #0ea5e9;
-  --primary-600: #0284c7;
+  --primary-50: #10880c;
+  --primary-100: #047a61;
+  --primary-400: #082299;
+  --primary-500: #0e53e9;
+  --primary-600: #026ec7d5;
 
   /* Accent Colors */
   --accent-400: #fbbf24;

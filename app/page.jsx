@@ -20,7 +20,7 @@ export default function Home() {
         ...doc.data(),
       }));
 
-      setBugs(data.slice(0, 3)); // show only latest 3
+      setBugs(data.slice(0, 4)); // show only latest 4
     } catch (err) {
       console.error("Error fetching bugs:", err);
     } finally {
@@ -90,8 +90,12 @@ export default function Home() {
       </section>
 
       <section className="py-20 px-6 bg-background">
-        <h2 className="text-3xl text-center font-bold mb-10 text-foreground">
-          Live Bug Feed 🔴
+        <h2 className="text-3xl text-center font-bold mb-10 text-foreground flex items-center justify-center gap-3">
+          Live Bug Feed
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
         </h2>
 
         <div className="max-w-4xl mx-auto space-y-4">
