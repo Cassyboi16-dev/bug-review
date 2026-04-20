@@ -16,6 +16,7 @@
     "firebase-admin": "^13.8.0",
     "formik": "^2.4.9",
     "framer-motion": "^12.38.0",
+    "git-filter-repo": "^0.0.30",
     "next": "16.2.3",
     "next-auth": "^5.0.0-beta.30",
     "pip": "^0.0.1",
