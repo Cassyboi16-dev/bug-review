@@ -2,9 +2,6 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Github from "next-auth/providers/github";
 import Discord from "next-auth/providers/discord";
-
-import { FirestoreAdapter } from "@auth/firebase-adapter";
-
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -22,11 +19,7 @@ const firebaseApp =
 
 const db = getFirestore(firebaseApp);
 
-// Username generator
-const generateDefaultUsername = () => {
-  const randomNum = Math.floor(Math.random() * 9999) + 1;
-  return `bugger${randomNum}`;
-};
+
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -43,29 +36,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.AUTH_DISCORD_SECRET,
     }),
   ],
-
-  // adapter: FirestoreAdapter(db),
-
-  // secret: process.env.AUTH_SECRET,
-
-  // // ⚠️ optional
-  // // allowDangerousEmailAccountLinking: true,
-
-  // events: {
-  //   async createUser({ user }) {
-  //     if (!user.username) {
-  //       user.username = generateDefaultUsername();
-  //     }
-  //   },
-  // },
-
-  // callbacks: {
-  //   async session({ session, user }) {
-  //     if (session.user) {
-  //       session.user.id = user.id;
-  //       session.user.username = user.username;
-  //     }
-  //     return session;
-  //   },
-  // },
 });
