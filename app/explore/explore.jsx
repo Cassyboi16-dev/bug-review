@@ -11,7 +11,17 @@ import {
   increment,
   deleteDoc,
 } from "firebase/firestore";
-
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import Link from "next/link";
+import { FiArrowRight } from "react-icons/fi";
 import { useEffect, useState, useMemo, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,30 +46,77 @@ import { HiTrendingUp } from "react-icons/hi";
 // COUNTRY UTILS
 // ─────────────────────────────────────────────
 const COUNTRY_CODES = {
-  nigeria: "NG", "united states": "US", usa: "US",
-  "united kingdom": "GB", uk: "GB", canada: "CA", india: "IN",
-  germany: "DE", france: "FR", spain: "ES", italy: "IT",
-  netherlands: "NL", belgium: "BE", switzerland: "CH", sweden: "SE",
-  norway: "NO", denmark: "DK", finland: "FI", poland: "PL",
-  russia: "RU", ukraine: "UA", japan: "JP", china: "CN",
-  "south korea": "KR", australia: "AU", "new zealand": "NZ",
-  brazil: "BR", mexico: "MX", argentina: "AR", "south africa": "ZA",
-  egypt: "EG", kenya: "KE", ghana: "GH", singapore: "SG",
-  malaysia: "MY", thailand: "TH", vietnam: "VN", philippines: "PH",
-  indonesia: "ID", pakistan: "PK", bangladesh: "BD", turkey: "TR",
-  "saudi arabia": "SA", uae: "AE", "united arab emirates": "AE",
-  israel: "IL", greece: "GR", portugal: "PT", ireland: "IE",
-  austria: "AT", "czech republic": "CZ", czechia: "CZ",
-  hungary: "HU", romania: "RO", serbia: "RS", croatia: "HR",
-  slovenia: "SI", chile: "CL", colombia: "CO", peru: "PE",
-  venezuela: "VE", ecuador: "EC", bolivia: "BO", paraguay: "PY",
+  nigeria: "NG",
+  "united states": "US",
+  usa: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  canada: "CA",
+  india: "IN",
+  germany: "DE",
+  france: "FR",
+  spain: "ES",
+  italy: "IT",
+  netherlands: "NL",
+  belgium: "BE",
+  switzerland: "CH",
+  sweden: "SE",
+  norway: "NO",
+  denmark: "DK",
+  finland: "FI",
+  poland: "PL",
+  russia: "RU",
+  ukraine: "UA",
+  japan: "JP",
+  china: "CN",
+  "south korea": "KR",
+  australia: "AU",
+  "new zealand": "NZ",
+  brazil: "BR",
+  mexico: "MX",
+  argentina: "AR",
+  "south africa": "ZA",
+  egypt: "EG",
+  kenya: "KE",
+  ghana: "GH",
+  singapore: "SG",
+  malaysia: "MY",
+  thailand: "TH",
+  vietnam: "VN",
+  philippines: "PH",
+  indonesia: "ID",
+  pakistan: "PK",
+  bangladesh: "BD",
+  turkey: "TR",
+  "saudi arabia": "SA",
+  uae: "AE",
+  "united arab emirates": "AE",
+  israel: "IL",
+  greece: "GR",
+  portugal: "PT",
+  ireland: "IE",
+  austria: "AT",
+  "czech republic": "CZ",
+  czechia: "CZ",
+  hungary: "HU",
+  romania: "RO",
+  serbia: "RS",
+  croatia: "HR",
+  slovenia: "SI",
+  chile: "CL",
+  colombia: "CO",
+  peru: "PE",
+  venezuela: "VE",
+  ecuador: "EC",
+  bolivia: "BO",
+  paraguay: "PY",
   uruguay: "UY",
 };
 
 const toFlagEmoji = (code) =>
-  code.toUpperCase().replace(/./g, (c) =>
-    String.fromCodePoint(127397 + c.charCodeAt(0))
-  );
+  code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 
 const getCountryFlag = (name) => {
   if (!name || name === "Unknown") return String.fromCodePoint(0x1f30d);
@@ -111,7 +168,13 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
 // allComments is the full flat array from Firestore.
 // Each reply just has parentId pointing to its parent's id.
 // ─────────────────────────────────────────────
-function CommentNode({ comment, allComments, depth, onAddReply, getRelativeTime }) {
+function CommentNode({
+  comment,
+  allComments,
+  depth,
+  onAddReply,
+  getRelativeTime,
+}) {
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [showChildren, setShowChildren] = useState(depth < 2);
 
@@ -242,7 +305,6 @@ export default function Explore({ session }) {
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [expandedComments, setExpandedComments] = useState({});
   const [deletingPostId, setDeletingPostId] = useState(null);
-  const [showMoreTags, setShowMoreTags] = useState(false);
 
   // Tracks which post IDs have already been registered as viewed this session.
   // Prevents duplicate Firestore writes when the component re-renders.
@@ -289,9 +351,14 @@ export default function Explore({ session }) {
     const views = post.viewedBy?.length || 0;
     const comments = post.comments?.length || 0;
     const dateObj = getDateObj(post.createdAt);
-    const ageHours = dateObj ? (Date.now() - dateObj.getTime()) / 3_600_000 : 9999;
+    const ageHours = dateObj
+      ? (Date.now() - dateObj.getTime()) / 3_600_000
+      : 9999;
     const boost = Math.max(0, 1 - ageHours / 72);
-    return (likes * 3 + saves * 2 + shares * 2 + comments * 2 + views * 0.5) * (1 + boost);
+    return (
+      (likes * 3 + saves * 2 + shares * 2 + comments * 2 + views * 0.5) *
+      (1 + boost)
+    );
   };
 
   // Post must have ≥5 unique views AND a meaningful engagement score to trend
@@ -299,9 +366,7 @@ export default function Explore({ session }) {
     (post.viewedBy?.length || 0) >= 5 && getTrendingScore(post) >= 5;
 
   // ── Dynamic hashtags ──────────────────────────
-  // Returns ALL tags sorted by frequency as [{tag, count}].
-  // Top 5 are shown directly; the rest collapse into a dropdown.
-  const allHashtags = useMemo(() => {
+  const dynamicHashtags = useMemo(() => {
     const tagCount = {};
     posts.forEach((post) => {
       const fromField = [...(post.tags || []), ...(post.topics || [])];
@@ -312,24 +377,17 @@ export default function Explore({ session }) {
       [...fromField, ...fromText].forEach((tag) => {
         if (!tag) return;
         const k = tag.toLowerCase().trim();
-        if (k.length < 2) return;
         tagCount[k] = (tagCount[k] || 0) + 1;
       });
     });
-    const sorted = Object.entries(tagCount)
+    const fromPosts = Object.entries(tagCount)
       .sort((a, b) => b[1] - a[1])
-      .map(([tag, count]) => ({ tag, count }));
-    if (sorted.length === 0) {
-      return ["react", "bug", "performance", "security", "ui/ux"].map(
-        (tag) => ({ tag, count: 0 })
-      );
-    }
-    return sorted;
+      .slice(0, 8)
+      .map(([t]) => t);
+    return fromPosts.length >= 3
+      ? fromPosts
+      : ["react", "bug", "performance", "security", "ui/ux"];
   }, [posts]);
-
-  const TOP_TAG_COUNT = 5;
-  const topTags = allHashtags.slice(0, TOP_TAG_COUNT);
-  const moreTags = allHashtags.slice(TOP_TAG_COUNT);
 
   // ── Filtered + sorted posts ───────────────────
   const filteredPosts = useMemo(() => {
@@ -347,8 +405,12 @@ export default function Explore({ session }) {
           p.author?.toLowerCase().includes(q) ||
           (p.tags || []).some((t) => t.toLowerCase().includes(q)) ||
           (p.topics || []).some((t) => t.toLowerCase().includes(q)) ||
-          p.title?.match(/#\w+/g)?.some((t) => t.slice(1).toLowerCase().includes(q)) ||
-          p.description?.match(/#\w+/g)?.some((t) => t.slice(1).toLowerCase().includes(q))
+          p.title
+            ?.match(/#\w+/g)
+            ?.some((t) => t.slice(1).toLowerCase().includes(q)) ||
+          p.description
+            ?.match(/#\w+/g)
+            ?.some((t) => t.slice(1).toLowerCase().includes(q)),
       );
     }
 
@@ -359,7 +421,7 @@ export default function Explore({ session }) {
           (p.tags || []).some((t) => t.toLowerCase() === f) ||
           (p.topics || []).some((t) => t.toLowerCase() === f) ||
           p.title?.toLowerCase().includes(f) ||
-          p.description?.toLowerCase().includes(f)
+          p.description?.toLowerCase().includes(f),
       );
     }
 
@@ -368,10 +430,14 @@ export default function Explore({ session }) {
         result.sort((a, b) => getTrendingScore(b) - getTrendingScore(a));
         break;
       case "top":
-        result.sort((a, b) => (b.likedBy?.length || 0) - (a.likedBy?.length || 0));
+        result.sort(
+          (a, b) => (b.likedBy?.length || 0) - (a.likedBy?.length || 0),
+        );
         break;
       case "viewed":
-        result.sort((a, b) => (b.viewedBy?.length || 0) - (a.viewedBy?.length || 0));
+        result.sort(
+          (a, b) => (b.viewedBy?.length || 0) - (a.viewedBy?.length || 0),
+        );
         break;
       default:
         result.sort((a, b) => {
@@ -426,7 +492,7 @@ export default function Explore({ session }) {
           }
         });
       },
-      { threshold: 0.5 } // at least 50% of the card must be visible
+      { threshold: 0.5 }, // at least 50% of the card must be visible
     );
 
     // Observe every post card that's currently rendered
@@ -480,18 +546,27 @@ export default function Explore({ session }) {
   };
 
   // ── Delete ────────────────────────────────────
-  const deletePost = async (post) => {
-    if (!window.confirm("Delete this post? This cannot be undone.")) return;
+  const deletePost = async () => {
+    if (!deleteModal.post) return;
+
+    const post = deleteModal.post;
+
     setDeletingPostId(post.id);
+
     try {
       await deleteDoc(doc(db, "bugPosts", post.id));
       toast.success("Post deleted");
+      setDeleteModal({ open: false, post: null });
     } catch {
       toast.error("Failed to delete post");
     } finally {
       setDeletingPostId(null);
     }
   };
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    post: null,
+  });
 
   // ── Add top-level comment ─────────────────────
   // FLAT STRUCTURE: every comment and reply lives in the same `comments` array.
@@ -550,7 +625,6 @@ export default function Explore({ session }) {
       <Toaster position="bottom-center" />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 max-w-7xl mx-auto">
-
         {/* ── SIDEBAR ── */}
         <div className="lg:col-span-1 space-y-4">
           <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
@@ -612,29 +686,7 @@ export default function Explore({ session }) {
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               <HiTrendingUp className="text-primary-500" />
               Trending Topics
-              {allHashtags.length > 0 && (
-                <span className="ml-auto text-xs text-text-muted font-normal">
-                  {allHashtags.length} topic{allHashtags.length !== 1 ? "s" : ""}
-                </span>
-              )}
             </h3>
-
-            {/* Active filter indicator */}
-            {topicFilter !== "all" && (
-              <div className="flex items-center gap-1.5 bg-primary-500/10 border border-primary-500/30 rounded-lg px-2.5 py-1.5">
-                <span className="text-xs text-primary-500 font-semibold flex-1 truncate">
-                  #{topicFilter}
-                </span>
-                <button
-                  onClick={() => setTopicFilter("all")}
-                  className="text-primary-500 hover:text-primary-400 flex-shrink-0"
-                >
-                  <FiX className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-
-            {/* Top 5 tags — always visible */}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setTopicFilter("all")}
@@ -646,83 +698,22 @@ export default function Explore({ session }) {
               >
                 All
               </button>
-              {topTags.map(({ tag, count }) => (
+              {dynamicHashtags.map((tag) => (
                 <button
                   key={tag}
                   onClick={() =>
                     setTopicFilter(topicFilter === tag ? "all" : tag)
                   }
-                  title={`${count} post${count !== 1 ? "s" : ""}`}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
                     topicFilter === tag
                       ? "bg-primary-500 text-white"
                       : "bg-background text-foreground border border-border hover:border-primary-500"
                   }`}
                 >
                   #{tag}
-                  {count > 0 && (
-                    <span className={`text-[10px] font-normal ${topicFilter === tag ? "text-white/70" : "text-text-muted"}`}>
-                      {count}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>
-
-            {/* Overflow tags in collapsible dropdown */}
-            {moreTags.length > 0 && (
-              <div className="space-y-1.5">
-                <button
-                  onClick={() => setShowMoreTags((v) => !v)}
-                  className="flex items-center gap-1.5 text-xs text-text-muted hover:text-primary-500 transition w-full"
-                >
-                  {showMoreTags ? (
-                    <FiChevronUp className="w-3 h-3" />
-                  ) : (
-                    <FiChevronDown className="w-3 h-3" />
-                  )}
-                  {showMoreTags
-                    ? "Show less"
-                    : `${moreTags.length} more topic${moreTags.length !== 1 ? "s" : ""}`}
-                </button>
-
-                <AnimatePresence>
-                  {showMoreTags && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="flex flex-wrap gap-2 pt-1">
-                        {moreTags.map(({ tag, count }) => (
-                          <button
-                            key={tag}
-                            onClick={() =>
-                              setTopicFilter(topicFilter === tag ? "all" : tag)
-                            }
-                            title={`${count} post${count !== 1 ? "s" : ""}`}
-                            className={`px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1 ${
-                              topicFilter === tag
-                                ? "bg-primary-500 text-white"
-                                : "bg-background text-foreground border border-border hover:border-primary-500"
-                            }`}
-                          >
-                            #{tag}
-                            {count > 0 && (
-                              <span className={`text-[10px] font-normal ${topicFilter === tag ? "text-white/70" : "text-text-muted"}`}>
-                                {count}
-                              </span>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
           </div>
         </div>
 
@@ -733,8 +724,8 @@ export default function Explore({ session }) {
             <p className="text-text-muted text-sm">
               {filteredPosts.length} post{filteredPosts.length !== 1 ? "s" : ""}
               {searchQuery && ` matching "${searchQuery}"`}
-              {topicFilter !== "all" && ` in #${topicFilter}`}
-              {" "}• Discover real bugs and solutions
+              {topicFilter !== "all" && ` in #${topicFilter}`} • Discover real
+              bugs and solutions
             </p>
           </div>
 
@@ -763,7 +754,9 @@ export default function Explore({ session }) {
                   return (
                     <motion.div
                       key={post.id}
-                      ref={(el) => { postRefs.current[post.id] = el; }}
+                      ref={(el) => {
+                        postRefs.current[post.id] = el;
+                      }}
                       data-post-id={post.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -805,7 +798,7 @@ export default function Explore({ session }) {
                         {isOwner && (
                           <motion.button
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => deletePost(post)}
+                            onClick={() => setDeleteModal({ open: true, post })}
                             disabled={deletingPostId === post.id}
                             title="Delete post"
                             className="flex-shrink-0 ml-2 p-2 rounded-lg text-text-muted hover:bg-red-500/10 hover:text-red-400 transition disabled:opacity-40"
@@ -820,15 +813,25 @@ export default function Explore({ session }) {
                         <h2 className="text-lg font-bold text-foreground">
                           {post.title}
                         </h2>
-                        <p className="text-foreground text-sm leading-relaxed line-clamp-3">
-                          {post.description}
-                        </p>
+                        <div className="space-y-2">
+                          <p className="text-sm line-clamp-3">
+                            {post.description}
+                          </p>
+
+                          <Link href={`/post/${post.id}`}>
+                            <button className="flex items-center gap-1 text-xs text-primary-500 hover:underline">
+                              Read More <FiArrowRight className="w-3 h-3" />
+                            </button>
+                          </Link>
+                        </div>
                         {(post.tags || post.topics) && (
                           <div className="flex flex-wrap gap-1 pt-1">
                             {(post.tags || post.topics || []).map((tag) => (
                               <button
                                 key={tag}
-                                onClick={() => setTopicFilter(tag.toLowerCase())}
+                                onClick={() =>
+                                  setTopicFilter(tag.toLowerCase())
+                                }
                                 className="text-xs text-primary-500 hover:underline"
                               >
                                 #{tag}
@@ -880,7 +883,7 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => toggleSave(post)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
                             saved
                               ? "bg-primary-500/20 text-primary-500 hover:bg-primary-500/30"
                               : "bg-background text-foreground hover:bg-surface"
@@ -893,7 +896,7 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => sharePost(post)}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-background text-foreground hover:bg-surface font-semibold text-sm transition"
+                          className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg bg-background text-foreground hover:bg-surface font-semibold text-sm transition"
                         >
                           <FiShare2 className="w-4 h-4" />
                           Share
@@ -902,14 +905,14 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => toggleComments(post.id)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
                             commentsExpanded
                               ? "bg-primary-500/20 text-primary-500"
                               : "bg-background text-foreground hover:bg-surface"
                           }`}
                         >
                           <FiMessageCircle className="w-4 h-4" />
-                          {totalComments > 0 ? totalComments : "Comment"}
+                          {totalComments > 0 ? totalComments : "Chat"}
                         </motion.button>
                       </div>
 
@@ -992,6 +995,59 @@ export default function Explore({ session }) {
           )}
         </div>
       </div>
+      <Dialog
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, post: null })}
+        PaperProps={{
+          sx: {
+            backgroundColor: "var(--surface)",
+            color: "var(--foreground)",
+            borderRadius: "12px",
+            border: "1px solid var(--border)",
+            minWidth: "320px",
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Delete Post</DialogTitle>
+
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "var(--text-muted)" }}>
+            Whoa! Careful Now 😅 You don't want to do what
+            you would regret. This action cannot be undone. Are you sure you want to delete the post titled "
+            <span style={{ fontWeight: 500, color: "var(--foreground)" }}>
+              {deleteModal.post?.title}
+            </span>
+            "?
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteModal({ open: false, post: null })}
+            sx={{
+              textTransform: "none",
+              color: "var(--text-muted)",
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            onClick={deletePost}
+            disabled={deletingPostId === deleteModal.post?.id}
+            sx={{
+              textTransform: "none",
+              backgroundColor: "rgba(239,68,68,0.15)",
+              color: "#f87171",
+              "&:hover": {
+                backgroundColor: "rgba(239,68,68,0.25)",
+              },
+            }}
+          >
+            {deletingPostId === deleteModal.post?.id ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </main>
   );
 }
