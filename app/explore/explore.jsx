@@ -883,7 +883,7 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => toggleSave(post)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
                             saved
                               ? "bg-primary-500/20 text-primary-500 hover:bg-primary-500/30"
                               : "bg-background text-foreground hover:bg-surface"
@@ -896,7 +896,7 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => sharePost(post)}
-                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-background text-foreground hover:bg-surface font-semibold text-sm transition"
+                          className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg bg-background text-foreground hover:bg-surface font-semibold text-sm transition"
                         >
                           <FiShare2 className="w-4 h-4" />
                           Share
@@ -905,14 +905,14 @@ export default function Explore({ session }) {
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           onClick={() => toggleComments(post.id)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition ${
+                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
                             commentsExpanded
                               ? "bg-primary-500/20 text-primary-500"
                               : "bg-background text-foreground hover:bg-surface"
                           }`}
                         >
                           <FiMessageCircle className="w-4 h-4" />
-                          {totalComments > 0 ? totalComments : "Comment"}
+                          {totalComments > 0 ? totalComments : "Chat"}
                         </motion.button>
                       </div>
 
@@ -1012,8 +1012,12 @@ export default function Explore({ session }) {
 
         <DialogContent>
           <Typography variant="body2" sx={{ color: "var(--text-muted)" }}>
-            This action cannot be undone. Are you sure you want to delete this
-            post?
+            Whoa! Careful Now 😅 You don't want to do what
+            you would regret. This action cannot be undone. Are you sure you want to delete the post titled "
+            <span style={{ fontWeight: 500, color: "var(--foreground)" }}>
+              {deleteModal.post?.title}
+            </span>
+            "?
           </Typography>
         </DialogContent>
 

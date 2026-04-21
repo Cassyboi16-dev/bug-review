@@ -2,8 +2,10 @@
 
 export default function UploadFoot () {
   return (
-    <main className="p-3 bottom-0 bg-amber-600/50">
-      <h1 className="text-xl text-white flex items-center justify-center gap-5">All  Information  <span className="bg-red-600/20 shadow-emerald-400 active:cursor-wait text-white text-4xl p-4 rounded-2xl">Must  Respect</span>  Our  <span className="text-red-600 text-3xl">Communities  Guidelines</span></h1>
-    </main>
+    <div className="w-full py-4 text-center text-sm text-gray-500">
+      <p>Have a bug to share? <a href="/upload" className="text-primary-500 hover:underline">Upload it here!</a></p>
+        <p className="mt-1">Your bug reports help the community grow and improve. Thank you for sharing!</p>
+        <p className="mt-1">All submissions are subject to our Community Guidelines.</p>
+    </div>
   )
 }
