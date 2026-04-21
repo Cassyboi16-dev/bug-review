@@ -68,54 +68,8 @@ export default function SignIn() {
 
       <section className="w-full max-w-md flex flex-col gap-6">
         <div className="text-center">
-          <h1 className="text-4xl font-black text-primary-500">
-            Welcome Back
-          </h1>
-          <p className="text-text-muted mt-2 text-sm">
-            Sign in to continue
-          </p>
-        </div>
-
-        {/* ================= FORM ================= */}
-        <div className="bg-surface border border-border p-4 rounded-xl flex flex-col gap-3">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded-lg bg-background border border-border focus:border-primary-500 outline-none"
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="p-3 rounded-lg bg-background border border-border focus:border-primary-500 outline-none"
-          />
-
-          <button
-            onClick={handleEmailAuth}
-            disabled={!consent}
-            className={`py-3 rounded-xl font-semibold transition ${
-              consent
-                ? "bg-primary-500 text-white hover:bg-primary-600"
-                : "opacity-40 cursor-not-allowed bg-surface-muted"
-            }`}
-          >
-            {mode === "login" ? "Sign In" : "Create Account"}
-          </button>
-
-          <p
-            onClick={() =>
-              setMode(mode === "login" ? "register" : "login")
-            }
-            className="text-xs text-center text-primary-500 cursor-pointer hover:underline"
-          >
-            {mode === "login"
-              ? "Don't have an account? Create one"
-              : "Already have an account? Sign in"}
-          </p>
+          <h1 className="text-4xl font-black text-primary-500">Welcome Back</h1>
+          <p className="text-text-muted mt-2 text-sm">Sign in to continue</p>
         </div>
 
         {/* ================= CONSENT ================= */}
