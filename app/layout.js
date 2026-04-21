@@ -1,7 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 import Navbar from "@/Components/Navbar";
 import Footer from "@/Components/Footer";
+import AuthProvider from "@/Components/AuthProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -13,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Bug Review/HomePage",
+  title: "Bug Review - Fast, Friendly, and Focused Feedback for Your Code",
   description: "A Place to get your Bugs Reviewed Fast",
 };
 
@@ -24,10 +26,13 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar/>
-        {children}
-        <Footer/>
-        </body>
+        <AuthProvider>
+          <Navbar />
+          {children}
+           <Toaster position="bottom-center" />
+          <Footer />
+        </AuthProvider>
+      </body>
     </html>
   );
 }
