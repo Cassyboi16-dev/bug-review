@@ -92,18 +92,6 @@ export default function Profile() {
             </h2>
 
             <div className="flex flex-col gap-4">
-              {/* USERNAME */}
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-400">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Your custom username"
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition text-white"
-                />
-              </div>
-
               {/* NAME */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-gray-400">Name</label>
