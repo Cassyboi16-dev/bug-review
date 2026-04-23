@@ -7,16 +7,39 @@ import { useEffect, useState } from "react";
 import { db } from "@/config/firebase.config";
 import { collection, getDocs } from "firebase/firestore";
 import { HiTrendingUp } from "react-icons/hi";
-import { FiClock, FiEye, FiHeart, FiMessageCircle, FiArrowRight, FiShare2, FiZap } from "react-icons/fi";
+import {
+  FiClock,
+  FiEye,
+  FiHeart,
+  FiMessageCircle,
+  FiArrowRight,
+  FiShare2,
+  FiZap,
+} from "react-icons/fi";
 
 // ── Country flag util ──────────────────────────
 const COUNTRY_CODES = {
-  nigeria:"NG","united states":"US",usa:"US","united kingdom":"GB",uk:"GB",
-  canada:"CA",india:"IN",germany:"DE",france:"FR",australia:"AU",brazil:"BR",
-  "south africa":"ZA",ghana:"GH",kenya:"KE",japan:"JP",china:"CN",
+  nigeria: "NG",
+  "united states": "US",
+  usa: "US",
+  "united kingdom": "GB",
+  uk: "GB",
+  canada: "CA",
+  india: "IN",
+  germany: "DE",
+  france: "FR",
+  australia: "AU",
+  brazil: "BR",
+  "south africa": "ZA",
+  ghana: "GH",
+  kenya: "KE",
+  japan: "JP",
+  china: "CN",
 };
 const toFlagEmoji = (code) =>
-  code.toUpperCase().replace(/./g,(c)=>String.fromCodePoint(127397+c.charCodeAt(0)));
+  code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 const getFlag = (name) => {
   if (!name) return "🌍";
   const n = name.trim().toLowerCase();
@@ -26,12 +49,14 @@ const getFlag = (name) => {
 
 const getRelativeTime = (ts) => {
   if (!ts) return "";
-  const d = ts?.toDate ? ts.toDate() : new Date(typeof ts === "number" ? ts : Number(ts));
+  const d = ts?.toDate
+    ? ts.toDate()
+    : new Date(typeof ts === "number" ? ts : Number(ts));
   const s = Math.floor((Date.now() - d) / 1000);
   if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s/60)}m ago`;
-  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-  return `${Math.floor(s/86400)}d ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
 };
 
 const getTrendingScore = (post) => {
@@ -46,36 +71,92 @@ const getTrendingScore = (post) => {
 // ── Ambient background ─────────────────────────
 function AmbientBG({ shouldReduceMotion }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <div className="absolute inset-0"
-        style={{background:"radial-gradient(circle at 50% 0%,rgba(14,165,233,0.18),transparent 55%)"}}
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 0%,rgba(14,165,233,0.18),transparent 55%)",
+        }}
       />
       <motion.div
         className="absolute inset-x-0 top-0 h-[32rem] opacity-60"
         style={{
-          backgroundImage:"linear-gradient(rgba(14,165,233,0.12) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,0.12) 1px,transparent 1px)",
-          backgroundSize:"80px 80px",
-          maskImage:"linear-gradient(to bottom,rgba(0,0,0,0.9),transparent 80%)",
-          WebkitMaskImage:"linear-gradient(to bottom,rgba(0,0,0,0.9),transparent 80%)",
+          backgroundImage:
+            "linear-gradient(rgba(14,165,233,0.12) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,0.12) 1px,transparent 1px)",
+          backgroundSize: "80px 80px",
+          maskImage:
+            "linear-gradient(to bottom,rgba(0,0,0,0.9),transparent 80%)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom,rgba(0,0,0,0.9),transparent 80%)",
         }}
-        animate={shouldReduceMotion ? undefined : {x:[0,-20,0],y:[0,12,0]}}
-        transition={{duration:18,repeat:Infinity,repeatType:"mirror",ease:"easeInOut"}}
+        animate={
+          shouldReduceMotion ? undefined : { x: [0, -20, 0], y: [0, 12, 0] }
+        }
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+        }}
       />
       {/* orbs */}
-      <motion.div className="absolute left-1/2 top-10 -translate-x-1/2 h-[28rem] w-[28rem] rounded-full blur-3xl"
-        style={{background:"radial-gradient(circle,rgba(14,165,233,0.38) 0%,rgba(14,165,233,0) 70%)"}}
-        animate={shouldReduceMotion?undefined:{scale:[1,1.06,1],opacity:[0.6,0.85,0.6]}}
-        transition={{duration:12,repeat:Infinity,repeatType:"mirror",ease:"easeInOut"}}
+      <motion.div
+        className="absolute left-1/2 top-10 -translate-x-1/2 h-[28rem] w-[28rem] rounded-full blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle,rgba(14,165,233,0.38) 0%,rgba(14,165,233,0) 70%)",
+        }}
+        animate={
+          shouldReduceMotion
+            ? undefined
+            : { scale: [1, 1.06, 1], opacity: [0.6, 0.85, 0.6] }
+        }
+        transition={{
+          duration: 12,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+        }}
       />
-      <motion.div className="absolute left-[-6rem] top-[20rem] h-64 w-64 rounded-full blur-3xl"
-        style={{background:"radial-gradient(circle,rgba(91,199,2,0.28) 0%,rgba(91,199,2,0) 72%)"}}
-        animate={shouldReduceMotion?undefined:{x:[0,24,0],y:[0,-16,0],opacity:[0.3,0.55,0.3]}}
-        transition={{duration:16,repeat:Infinity,repeatType:"mirror",ease:"easeInOut"}}
+      <motion.div
+        className="absolute left-[-6rem] top-[20rem] h-64 w-64 rounded-full blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle,rgba(91,199,2,0.28) 0%,rgba(91,199,2,0) 72%)",
+        }}
+        animate={
+          shouldReduceMotion
+            ? undefined
+            : { x: [0, 24, 0], y: [0, -16, 0], opacity: [0.3, 0.55, 0.3] }
+        }
+        transition={{
+          duration: 16,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+        }}
       />
-      <motion.div className="absolute right-[-4rem] top-[12rem] h-72 w-72 rounded-full blur-3xl"
-        style={{background:"radial-gradient(circle,rgba(245,158,11,0.26) 0%,rgba(245,158,11,0) 72%)"}}
-        animate={shouldReduceMotion?undefined:{x:[0,-20,0],y:[0,20,0],opacity:[0.25,0.48,0.25]}}
-        transition={{duration:14,repeat:Infinity,repeatType:"mirror",ease:"easeInOut"}}
+      <motion.div
+        className="absolute right-[-4rem] top-[12rem] h-72 w-72 rounded-full blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle,rgba(245,158,11,0.26) 0%,rgba(245,158,11,0) 72%)",
+        }}
+        animate={
+          shouldReduceMotion
+            ? undefined
+            : { x: [0, -20, 0], y: [0, 20, 0], opacity: [0.25, 0.48, 0.25] }
+        }
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          repeatType: "mirror",
+          ease: "easeInOut",
+        }}
       />
     </div>
   );
@@ -89,18 +170,23 @@ function PostCard({ post, variant = "default", index = 0 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}    
+      viewport={{ once: true }}             
       transition={{ delay: index * 0.06, duration: 0.35 }}
     >
       <Link href="/explore" className="block group">
-        <div className={`bg-surface border rounded-2xl p-4 transition-all duration-200 hover:border-primary-500 hover:shadow-[0_0_20px_rgba(14,165,233,0.08)] ${
-          isTrending ? "border-primary-500/40" : "border-border"
-        }`}>
-
+        <div
+          className={`bg-surface border rounded-2xl p-4 transition-all duration-200 hover:border-primary-500 hover:shadow-[0_0_20px_rgba(14,165,233,0.08)] ${
+            isTrending ? "border-primary-500/40" : "border-border"
+          }`}
+        >
           {/* ── author row + badges in one flex line ── */}
           <div className="flex items-center gap-2 mb-3 min-w-0">
             <img
-              src={post.authorImg || `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`}
+              src={
+                post.authorImg ||
+                `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`
+              }
               className="w-7 h-7 rounded-full border border-border object-cover flex-shrink-0"
               alt={post.author}
             />
@@ -109,7 +195,8 @@ function PostCard({ post, variant = "default", index = 0 }) {
                 {post.author || "Anonymous"}
               </p>
               <p className="text-[10px] text-text-muted truncate">
-                {getFlag(post.country)} {post.country} · {getRelativeTime(post.createdAt)}
+                {getFlag(post.country)} {post.country} ·{" "}
+                {getRelativeTime(post.createdAt)}
               </p>
             </div>
 
@@ -140,20 +227,25 @@ function PostCard({ post, variant = "default", index = 0 }) {
           {/* stats footer */}
           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[10px] text-text-muted">
             <span className="flex items-center gap-1">
-              <FiEye className="w-3 h-3" />{post.viewedBy?.length || 0}
+              <FiEye className="w-3 h-3" />
+              {post.viewedBy?.length || 0}
             </span>
             <span className="flex items-center gap-1">
-              <FiHeart className="w-3 h-3" />{post.likedBy?.length || 0}
+              <FiHeart className="w-3 h-3" />
+              {post.likedBy?.length || 0}
             </span>
             <span className="flex items-center gap-1">
-              <FiMessageCircle className="w-3 h-3" />{post.comments?.length || 0}
+              <FiMessageCircle className="w-3 h-3" />
+              {post.comments?.length || 0}
             </span>
             <span className="flex items-center gap-1">
-              <FiShare2 className="w-3 h-3" />{post.shares || 0}
+              <FiShare2 className="w-3 h-3" />
+              {post.shares || 0}
             </span>
             {isTrending && (
               <span className="ml-auto flex items-center gap-1 text-primary-500 font-semibold">
-                <FiZap className="w-3 h-3" />{Math.round(score)} pts
+                <FiZap className="w-3 h-3" />
+                {Math.round(score)} pts
               </span>
             )}
           </div>
@@ -215,9 +307,17 @@ export default function Home() {
         setRecent(byDate);
 
         // community stats
-        const uniqueAuthors = new Set(all.map((p) => p.authorId || p.author)).size;
-        const totalComments = all.reduce((s, p) => s + (p.comments?.length || 0), 0);
-        setStats({ posts: all.length, users: uniqueAuthors, solved: totalComments });
+        const uniqueAuthors = new Set(all.map((p) => p.authorId || p.author))
+          .size;
+        const totalComments = all.reduce(
+          (s, p) => s + (p.comments?.length || 0),
+          0,
+        );
+        setStats({
+          posts: all.length,
+          users: uniqueAuthors,
+          solved: totalComments,
+        });
       } catch (err) {
         console.error(err);
       } finally {
@@ -235,7 +335,6 @@ export default function Home() {
           HERO
       ══════════════════════════════════════ */}
       <section className="relative z-10 min-h-[88vh] flex flex-col justify-center items-center text-center px-4 gap-6">
-
         {/* community pill */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -265,7 +364,14 @@ export default function Home() {
           transition={{ delay: 0.25 }}
         >
           <TypeAnimation
-            sequence={["Expertise.", 2200, "Solutions.", 2200, "Confidence.", 2200]}
+            sequence={[
+              "Expertise.",
+              2200,
+              "Solutions.",
+              2200,
+              "Confidence.",
+              2200,
+            ]}
             speed={52}
             repeat={Infinity}
             className="text-5xl md:text-7xl font-black tracking-tight text-foreground/80"
@@ -278,7 +384,8 @@ export default function Home() {
           transition={{ delay: 0.35 }}
           className="max-w-lg text-sm md:text-base text-text-muted leading-relaxed"
         >
-          A community where developers share real bugs, exchange solutions, and grow together. No gatekeeping. Just honest debugging.
+          A community where developers share real bugs, exchange solutions, and
+          grow together. No gatekeeping. Just honest debugging.
         </motion.p>
 
         <motion.div
@@ -287,12 +394,14 @@ export default function Home() {
           transition={{ delay: 0.45 }}
           className="flex flex-wrap gap-3 justify-center"
         >
-          <Link href="/signin"
+          <Link
+            href="/signin"
             className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-200 hover:scale-[1.03] text-sm"
           >
             Get started free <FiArrowRight className="w-4 h-4" />
           </Link>
-          <Link href="/explore"
+          <Link
+            href="/explore"
             className="flex items-center gap-2 border border-border hover:border-primary-500 text-foreground px-6 py-2.5 rounded-full transition-all duration-200 text-sm"
           >
             Browse the feed
@@ -313,7 +422,9 @@ export default function Home() {
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
               <p className="text-xl font-black text-foreground">{value}</p>
-              <p className="text-[10px] text-text-muted uppercase tracking-widest mt-0.5">{label}</p>
+              <p className="text-[10px] text-text-muted uppercase tracking-widest mt-0.5">
+                {label}
+              </p>
             </div>
           ))}
         </motion.div>
@@ -330,15 +441,34 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">How it works</p>
-            <h2 className="text-3xl font-black tracking-tight">Simple. Open. Effective.</h2>
+            <p className="text-[11px] uppercase tracking-widest text-text-muted mb-3">
+              How it works
+            </p>
+            <h2 className="text-3xl font-black tracking-tight">
+              Simple. Open. Effective.
+            </h2>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              { num: "01", icon: "🐛", title: "Post your bug", desc: "Describe what broke, paste your error, share your environment. Takes 60 seconds." },
-              { num: "02", icon: "💬", title: "Get real feedback", desc: "Developers who've faced the same issue reply, suggest fixes, and dig into the root cause." },
-              { num: "03", icon: "🚀", title: "Ship with confidence", desc: "Mark it resolved, learn from it, and help the next developer who hits the same wall." },
+              {
+                num: "01",
+                icon: "🐛",
+                title: "Post your bug",
+                desc: "Describe what broke, paste your error, share your environment. Takes 60 seconds.",
+              },
+              {
+                num: "02",
+                icon: "💬",
+                title: "Get real feedback",
+                desc: "Developers who've faced the same issue reply, suggest fixes, and dig into the root cause.",
+              },
+              {
+                num: "03",
+                icon: "🚀",
+                title: "Ship with confidence",
+                desc: "Mark it resolved, learn from it, and help the next developer who hits the same wall.",
+              },
             ].map(({ num, icon, title, desc }, i) => (
               <motion.div
                 key={num}
@@ -350,10 +480,14 @@ export default function Home() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <span className="text-2xl">{icon}</span>
-                  <span className="text-[11px] font-black text-border group-hover:text-primary-500/40 transition-colors">{num}</span>
+                  <span className="text-[11px] font-black text-border group-hover:text-primary-500/40 transition-colors">
+                    {num}
+                  </span>
                 </div>
                 <h3 className="font-bold text-foreground mb-2">{title}</h3>
-                <p className="text-xs text-text-muted leading-relaxed">{desc}</p>
+                <p className="text-xs text-text-muted leading-relaxed">
+                  {desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -365,7 +499,6 @@ export default function Home() {
       ══════════════════════════════════════ */}
       <section className="relative z-10 py-16 px-4 sm:px-6 bg-surface/40 border-t border-border">
         <div className="max-w-6xl mx-auto">
-
           {/* section header */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -396,8 +529,16 @@ export default function Home() {
           {/* ── Mobile tab switcher (hidden on lg) ── */}
           <div className="flex lg:hidden bg-surface border border-border rounded-xl p-1 mb-6">
             {[
-              { id: "trending", label: "Trending", icon: <HiTrendingUp className="w-3.5 h-3.5" /> },
-              { id: "recent",   label: "Recent",   icon: <FiClock className="w-3.5 h-3.5" /> },
+              {
+                id: "trending",
+                label: "Trending",
+                icon: <HiTrendingUp className="w-3.5 h-3.5" />,
+              },
+              {
+                id: "recent",
+                label: "Recent",
+                icon: <FiClock className="w-3.5 h-3.5" />,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -416,9 +557,10 @@ export default function Home() {
 
           {/* ── Desktop: two columns | Mobile: single active tab ── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-
             {/* ── TRENDING column ── */}
-            <div className={activeTab === "trending" ? "block" : "hidden lg:block"}>
+            <div
+              className={activeTab === "trending" ? "block" : "hidden lg:block"}
+            >
               {/* column header — desktop only */}
               <div className="hidden lg:flex items-center gap-2 mb-4">
                 <HiTrendingUp className="w-4 h-4 text-primary-500" />
@@ -428,26 +570,36 @@ export default function Home() {
               </div>
 
               <div className="space-y-3">
-                {loading
-                  ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-                  : trending.length > 0
-                    ? trending.map((post, i) => (
-                        <PostCard key={post.id} post={post} variant="trending" index={i} />
-                      ))
-                    : (
-                      <div className="bg-surface border border-border rounded-2xl p-8 text-center">
-                        <p className="text-sm text-text-muted">No trending posts yet.</p>
-                        <p className="text-xs text-text-muted mt-1">
-                          Posts need at least 1 view to appear here.
-                        </p>
-                      </div>
-                    )
-                }
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))
+                ) : trending.length > 0 ? (
+                  trending.map((post, i) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      variant="trending"
+                      index={i}
+                    />
+                  ))
+                ) : (
+                  <div className="bg-surface border border-border rounded-2xl p-8 text-center">
+                    <p className="text-sm text-text-muted">
+                      No trending posts yet.
+                    </p>
+                    <p className="text-xs text-text-muted mt-1">
+                      Posts need at least 1 view to appear here.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* ── RECENT column ── */}
-            <div className={activeTab === "recent" ? "block" : "hidden lg:block"}>
+            <div
+              className={activeTab === "recent" ? "block" : "hidden lg:block"}
+            >
               {/* column header — desktop only */}
               <div className="hidden lg:flex items-center gap-2 mb-4">
                 <FiClock className="w-4 h-4 text-text-muted" />
@@ -457,21 +609,27 @@ export default function Home() {
               </div>
 
               <div className="space-y-3">
-                {loading
-                  ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-                  : recent.length > 0
-                    ? recent.map((post, i) => (
-                        <PostCard key={post.id} post={post} variant="recent" index={i} />
-                      ))
-                    : (
-                      <div className="bg-surface border border-border rounded-2xl p-8 text-center">
-                        <p className="text-sm text-text-muted">No posts yet.</p>
-                        <p className="text-xs text-text-muted mt-1">
-                          Be the first to report a bug.
-                        </p>
-                      </div>
-                    )
-                }
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))
+                ) : recent.length > 0 ? (
+                  recent.map((post, i) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      variant="recent"
+                      index={i}
+                    />
+                  ))
+                ) : (
+                  <div className="bg-surface border border-border rounded-2xl p-8 text-center">
+                    <p className="text-sm text-text-muted">No posts yet.</p>
+                    <p className="text-xs text-text-muted mt-1">
+                      Be the first to report a bug.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -488,14 +646,18 @@ export default function Home() {
           viewport={{ once: true }}
           className="max-w-lg mx-auto space-y-5"
         >
-          <p className="text-[11px] uppercase tracking-widest text-text-muted">Join the community</p>
+          <p className="text-[11px] uppercase tracking-widest text-text-muted">
+            Join the community
+          </p>
           <h2 className="text-4xl font-black tracking-tight">
             Stop debugging alone.
           </h2>
           <p className="text-sm text-text-muted leading-relaxed">
-            Thousands of developers share bugs daily. Your next breakthrough might already be in the feed.
+            Thousands of developers share bugs daily. Your next breakthrough
+            might already be in the feed.
           </p>
-          <Link href="/signin"
+          <Link
+            href="/signin"
             className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 hover:gap-3 text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 hover:scale-[1.03] text-sm"
           >
             Sign in to post a bug <FiArrowRight className="w-4 h-4" />
@@ -510,9 +672,19 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
           <p className="font-semibold text-foreground">BugReview</p>
           <div className="flex items-center gap-5">
-            <Link href="/explore" className="hover:text-primary-500 transition-colors">Explore</Link>
-            <Link href="/signin" className="hover:text-primary-500 transition-colors">Sign in</Link>
-            <Link href="/upload" className="hover:text-primary-500 transition-colors">Post a bug</Link>
+            <Link
+              href="/explore"
+              className="hover:text-primary-500 transition-colors"
+            >
+              Explore
+            </Link>
+
+            <Link
+              href="/upload"
+              className="hover:text-primary-500 transition-colors"
+            >
+              Post a bug
+            </Link>
           </div>
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
         </div>
