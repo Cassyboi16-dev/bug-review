@@ -50,10 +50,10 @@ export default function Footer() {
 
         {/* SOCIALS */}
         <div className="flex items-center justify-center gap-5 mt-8">
-          <SocialIcon icon={<FaXTwitter />} />
-          <SocialIcon icon={<FaInstagram />} />
-          <SocialIcon icon={<FaDiscord />} />
-          <SocialIcon icon={<IoLogoGithub />} />
+          <SocialIcon icon={<FaXTwitter />} href="https://x.com/BugReviewHQ" />
+          <SocialIcon icon={<FaInstagram />} href="https://instagram.com/bugreview" />
+          <SocialIcon icon={<FaDiscord />} href="https://discord.gg/bugreview" />
+          <SocialIcon icon={<IoLogoGithub />} href="https://github.com/bugreview" />
         </div>
 
         {/* BOTTOM BAR */}
@@ -72,12 +72,15 @@ export default function Footer() {
 }
 
 /* Reusable Social Icon */
-function SocialIcon({ icon }) {
+function SocialIcon({ icon, href }) {
   return (
-    <div className="p-2 rounded-full bg-surface-muted border border-border hover:bg-background hover:scale-110 transition cursor-pointer">
-      <div className="text-lg text-text-muted hover:text-foreground transition">
-        {icon}
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      <div className="p-2 rounded-full bg-surface-muted border border-border hover:bg-background hover:scale-110 transition cursor-pointer">
+        <div className="text-lg text-text-muted hover:text-foreground transition">
+          {icon}
+        </div>
       </div>
-    </div>
+    </a>
   );
 }
+
