@@ -18,7 +18,6 @@ import {
   DialogActions,
   Button,
   Typography,
-  IconButton,
 } from "@mui/material";
 import Link from "next/link";
 import { FiArrowRight } from "react-icons/fi";
@@ -40,10 +39,11 @@ import {
   FiChevronUp,
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
+import { CiBookmark } from "react-icons/ci";
 import { HiTrendingUp } from "react-icons/hi";
 
 // ─────────────────────────────────────────────
-// COUNTRY UTILS
+// COUNTRY UTILS  (unchanged)
 // ─────────────────────────────────────────────
 const COUNTRY_CODES = {
   nigeria: "NG",
@@ -127,8 +127,7 @@ const getCountryFlag = (name) => {
 };
 
 // ─────────────────────────────────────────────
-// LAG-FREE INPUT COMPONENT
-// Has its own local state so typing never re-renders the whole page.
+// LAG-FREE INPUT  (unchanged — already correct)
 // ─────────────────────────────────────────────
 function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
   const [text, setText] = useState("");
@@ -149,12 +148,12 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         placeholder={placeholder}
-        className="flex-1 bg-background border border-border rounded-lg px-3 py-1.5 text-sm text-foreground placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="flex-1 bg-background border border-border rounded-full px-4 py-2 text-sm text-foreground placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
       />
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={handleSubmit}
-        className="p-2 rounded-lg bg-primary-500 text-white hover:bg-primary-600 transition flex-shrink-0"
+        className="p-2.5 rounded-full bg-primary-500 text-white hover:bg-primary-600 transition flex-shrink-0"
       >
         <FiSend className="w-3.5 h-3.5" />
       </motion.button>
@@ -163,10 +162,17 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
 }
 
 // ─────────────────────────────────────────────
-// RECURSIVE COMMENT NODE
-// Renders one comment and all its descendants to infinite depth.
-// allComments is the full flat array from Firestore.
-// Each reply just has parentId pointing to its parent's id.
+// COMMENT NODE — Reddit-style thread lines
+//
+// BUG 1 FIX: children AnimatePresence was using
+//   exit={{ opacity: 0, height: 0 }}
+// Framer Motion cannot smoothly animate FROM height:"auto" on exit.
+// It must first measure the current pixel height, which triggers a
+// one-frame repaint at full height before collapsing → visible snap glitch.
+//
+// FIX: keep height:"auto" on enter for smooth expansion, but exit
+// with opacity only. Height collapses naturally after the fade, which
+// is invisible — no more snap.
 // ─────────────────────────────────────────────
 function CommentNode({
   comment,
@@ -188,70 +194,88 @@ function CommentNode({
     setShowChildren(true);
   };
 
-  // Indent gets progressively smaller so deep threads don't blow out the layout
-  const indent = Math.min(depth * 16, 48);
-
   return (
-    <div style={{ marginLeft: indent }}>
-      <div className="bg-background rounded-lg p-3 border border-border/40 space-y-1.5">
-        {/* Author + text */}
-        <div className="flex items-start gap-2">
-          <img
-            src={
-              comment.authorImg ||
-              `https://api.dicebear.com/7.x/identicon/svg?seed=${comment.author}`
-            }
-            className="w-6 h-6 rounded-full border border-border object-cover flex-shrink-0 mt-0.5"
-            alt={comment.author}
+    <div className="flex gap-3">
+      {/* ── Left column: avatar + collapsible thread line (Reddit-style) ── */}
+      <div
+        className="flex flex-col items-center flex-shrink-0"
+        style={{ width: 28 }}
+      >
+        <img
+          src={
+            comment.authorImg ||
+            `https://api.dicebear.com/7.x/identicon/svg?seed=${comment.author}`
+          }
+          className="w-7 h-7 rounded-full border border-border object-cover flex-shrink-0"
+          alt={comment.author}
+        />
+        {/* Thread continuation line — clicking collapses the branch */}
+        {children.length > 0 && (
+          <button
+            onClick={() => setShowChildren((v) => !v)}
+            className="mt-1.5 w-0.5 flex-1 bg-border hover:bg-primary-500/50 rounded-full transition-colors min-h-[20px] cursor-pointer"
+            title={showChildren ? "Collapse thread" : "Expand thread"}
           />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs font-semibold text-foreground">
-                {comment.author}
-              </p>
-              <span className="text-xs text-text-muted">
-                {getRelativeTime(new Date(comment.createdAt))}
-              </span>
-            </div>
-            <p className="text-sm text-foreground mt-0.5 break-words">
-              {comment.text}
-            </p>
-          </div>
+        )}
+      </div>
+
+      {/* ── Right column: content + children ── */}
+      <div className="flex-1 min-w-0 pb-1">
+        {/* Header */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-1">
+          <span className="text-xs font-bold text-foreground">
+            {comment.author}
+          </span>
+          <span className="text-[11px] text-text-muted">
+            · {getRelativeTime(new Date(comment.createdAt))}
+          </span>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3 pl-8">
+        {/* Text */}
+        <p className="text-sm text-foreground/90 break-words leading-relaxed">
+          {comment.text}
+        </p>
+
+        {/* Actions — compact, Reddit-style */}
+        <div className="flex items-center gap-4 mt-2">
           <button
             onClick={() => setShowReplyInput((v) => !v)}
-            className="text-xs text-text-muted hover:text-primary-500 flex items-center gap-1 transition"
+            className="text-[11px] font-semibold text-text-muted hover:text-primary-500 flex items-center gap-1 transition"
           >
             <FiCornerDownRight className="w-3 h-3" />
             {showReplyInput ? "Cancel" : "Reply"}
           </button>
 
-          {children.length > 0 && (
+          {children.length > 0 && !showChildren && (
             <button
-              onClick={() => setShowChildren((v) => !v)}
-              className="text-xs text-primary-500 hover:underline flex items-center gap-1 transition"
+              onClick={() => setShowChildren(true)}
+              className="text-[11px] font-semibold text-primary-500 hover:underline flex items-center gap-1 transition"
             >
-              {showChildren ? (
-                <FiChevronUp className="w-3 h-3" />
-              ) : (
-                <FiChevronDown className="w-3 h-3" />
-              )}
-              {children.length} {children.length === 1 ? "reply" : "replies"}
+              <FiChevronDown className="w-3 h-3" />
+              {children.length} more{" "}
+              {children.length === 1 ? "reply" : "replies"}
+            </button>
+          )}
+
+          {children.length > 0 && showChildren && (
+            <button
+              onClick={() => setShowChildren(false)}
+              className="text-[11px] font-semibold text-text-muted hover:text-foreground flex items-center gap-1 transition"
+            >
+              <FiChevronUp className="w-3 h-3" />
+              Collapse
             </button>
           )}
         </div>
 
-        {/* Inline reply input — its own state, zero lag */}
+        {/* Reply input — opacity+y only (no height animation needed here) */}
         <AnimatePresence>
           {showReplyInput && (
             <motion.div
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="pl-8 pt-1"
+              className="mt-2.5"
             >
               <CommentInputBox
                 placeholder={`Reply to ${comment.author}…`}
@@ -261,30 +285,34 @@ function CommentNode({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* Recursive children */}
-      <AnimatePresence>
-        {showChildren && children.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-2 space-y-2 overflow-hidden"
-          >
-            {children.map((child) => (
-              <CommentNode
-                key={child.id}
-                comment={child}
-                allComments={allComments}
-                depth={depth + 1}
-                onAddReply={onAddReply}
-                getRelativeTime={getRelativeTime}
-              />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* ── CHILDREN — BUG 1 FIX ──
+            Was: exit={{ opacity: 0, height: 0 }} → caused snap glitch
+            Now: exit={{ opacity: 0 }} → fades out cleanly, height collapses
+            naturally after unmount with no visible jump */}
+        <AnimatePresence>
+          {showChildren && children.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="mt-3 space-y-3 overflow-hidden"
+            >
+              {children.map((child) => (
+                <CommentNode
+                  key={child.id}
+                  comment={child}
+                  allComments={allComments}
+                  depth={depth + 1}
+                  onAddReply={onAddReply}
+                  getRelativeTime={getRelativeTime}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -305,12 +333,9 @@ export default function Explore({ session }) {
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [expandedComments, setExpandedComments] = useState({});
   const [deletingPostId, setDeletingPostId] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, post: null });
 
-  // Tracks which post IDs have already been registered as viewed this session.
-  // Prevents duplicate Firestore writes when the component re-renders.
   const viewedThisSession = useRef(new Set());
-
-  // Refs map: postId → DOM element, used by the IntersectionObserver
   const postRefs = useRef({});
 
   // ── Live Firestore feed ───────────────────────
@@ -361,7 +386,6 @@ export default function Explore({ session }) {
     );
   };
 
-  // Post must have ≥5 unique views AND a meaningful engagement score to trend
   const isTrending = (post) =>
     (post.viewedBy?.length || 0) >= 5 && getTrendingScore(post) >= 5;
 
@@ -392,10 +416,8 @@ export default function Explore({ session }) {
   // ── Filtered + sorted posts ───────────────────
   const filteredPosts = useMemo(() => {
     let result = [...posts];
-
     if (showSavedOnly)
       result = result.filter((p) => p.savedBy?.includes(userId));
-
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
@@ -413,7 +435,6 @@ export default function Explore({ session }) {
             ?.some((t) => t.slice(1).toLowerCase().includes(q)),
       );
     }
-
     if (topicFilter !== "all") {
       const f = topicFilter.toLowerCase();
       result = result.filter(
@@ -424,7 +445,6 @@ export default function Explore({ session }) {
           p.description?.toLowerCase().includes(f),
       );
     }
-
     switch (sortMode) {
       case "trending":
         result.sort((a, b) => getTrendingScore(b) - getTrendingScore(a));
@@ -446,34 +466,32 @@ export default function Explore({ session }) {
           return bt - at;
         });
     }
-
     return result;
   }, [posts, searchQuery, topicFilter, sortMode, showSavedOnly, userId]);
 
   // ── View tracking via IntersectionObserver ────
-  // A view is only counted when the post card enters the viewport and stays
-  // visible for at least 1.5 s (avoids counting a rapid scroll-past).
-  // viewedThisSession prevents duplicate writes on re-renders / re-filters.
   useEffect(() => {
     if (!filteredPosts.length) return;
 
-    const timers = {};
+    // BUG 4 FIX: clean up stale refs for posts no longer in the filtered list.
+    // Without this, deleted or filtered-out posts keep entries in postRefs.current
+    // forever, causing the observer to attach to detached DOM nodes.
+    const activeIds = new Set(filteredPosts.map((p) => p.id));
+    Object.keys(postRefs.current).forEach((id) => {
+      if (!activeIds.has(id)) delete postRefs.current[id];
+    });
 
+    const timers = {};
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           const postId = entry.target.dataset.postId;
           if (!postId) return;
-
           if (entry.isIntersecting) {
-            // Start a 1.5 s dwell timer
             timers[postId] = setTimeout(async () => {
               if (viewedThisSession.current.has(postId)) return;
-
               const post = filteredPosts.find((p) => p.id === postId);
               if (!post) return;
-
-              // Only write to Firestore if this user hasn't viewed it before
               if (!post.viewedBy?.includes(userId)) {
                 try {
                   await updateDoc(doc(db, "bugPosts", postId), {
@@ -481,21 +499,17 @@ export default function Explore({ session }) {
                   });
                 } catch {}
               }
-
-              // Mark as seen this session regardless, to stop further checks
               viewedThisSession.current.add(postId);
             }, 1500);
           } else {
-            // User scrolled away before 1.5 s — cancel the timer
             clearTimeout(timers[postId]);
             delete timers[postId];
           }
         });
       },
-      { threshold: 0.5 }, // at least 50% of the card must be visible
+      { threshold: 0.5 },
     );
 
-    // Observe every post card that's currently rendered
     Object.entries(postRefs.current).forEach(([, el]) => {
       if (el) observer.observe(el);
     });
@@ -548,11 +562,8 @@ export default function Explore({ session }) {
   // ── Delete ────────────────────────────────────
   const deletePost = async () => {
     if (!deleteModal.post) return;
-
     const post = deleteModal.post;
-
     setDeletingPostId(post.id);
-
     try {
       await deleteDoc(doc(db, "bugPosts", post.id));
       toast.success("Post deleted");
@@ -563,16 +574,8 @@ export default function Explore({ session }) {
       setDeletingPostId(null);
     }
   };
-  const [deleteModal, setDeleteModal] = useState({
-    open: false,
-    post: null,
-  });
 
-  // ── Add top-level comment ─────────────────────
-  // FLAT STRUCTURE: every comment and reply lives in the same `comments` array.
-  // Top-level comments:  parentId = null
-  // Replies at any depth: parentId = id of the comment being replied to
-  // This means arrayUnion works for all depths — no nested array rewrites.
+  // ── Comments ──────────────────────────────────
   const addComment = async (postId, text) => {
     const entry = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -593,7 +596,6 @@ export default function Explore({ session }) {
     }
   };
 
-  // ── Add reply at any depth ────────────────────
   const addReply = async (postId, parentId, text) => {
     const entry = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -624,76 +626,87 @@ export default function Explore({ session }) {
     <main className="min-h-screen bg-background text-foreground">
       <Toaster position="bottom-center" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6 max-w-7xl mx-auto">
-        {/* ── SIDEBAR ── */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-foreground">Search Posts</h3>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search bugs, features, #tags..."
-              className="w-full bg-background text-foreground placeholder-text-muted border border-border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="text-xs text-primary-500 hover:underline flex items-center gap-1"
-              >
-                <FiX className="w-3 h-3" /> Clear search
-              </button>
-            )}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-0 lg:gap-6 p-0 lg:p-6 max-w-7xl mx-auto">
+        {/* ── SIDEBAR ─────────────────────────────── */}
+        <aside className="lg:col-span-1 space-y-3 p-4 lg:p-0">
+          {/* Search */}
+          <div className="bg-surface border border-border rounded-2xl p-4 space-y-2.5">
+            <h3 className="text-sm font-bold text-foreground">Search</h3>
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Bugs, authors, #tags…"
+                className="w-full bg-background text-foreground placeholder-text-muted border border-border rounded-xl pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-foreground transition"
+                >
+                  <FiX className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-foreground">Sort By</h3>
-            <div className="space-y-2">
+          {/* Sort */}
+          <div className="bg-surface border border-border rounded-2xl p-4 space-y-2.5">
+            <h3 className="text-sm font-bold text-foreground">Sort by</h3>
+            <div className="grid grid-cols-2 gap-1.5">
               {[
                 { value: "recent", label: "Recent" },
                 { value: "trending", label: "Trending" },
-                { value: "top", label: "Most Liked" },
-                { value: "viewed", label: "Most Viewed" },
-              ].map((option) => (
+                { value: "top", label: "Top liked" },
+                { value: "viewed", label: "Most seen" },
+              ].map((opt) => (
                 <button
-                  key={option.value}
-                  onClick={() => setSortMode(option.value)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    sortMode === option.value
+                  key={opt.value}
+                  onClick={() => setSortMode(opt.value)}
+                  className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition ${
+                    sortMode === opt.value
                       ? "bg-primary-500 text-white"
-                      : "bg-background text-foreground hover:bg-surface"
+                      : "bg-background text-text-muted hover:text-foreground border border-border"
                   }`}
                 >
-                  {option.label}
+                  {opt.label}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Saved toggle */}
           <motion.button
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => setShowSavedOnly(!showSavedOnly)}
-            className={`w-full px-4 py-3 rounded-lg font-semibold transition ${
+            className={`w-full px-4 py-2.5 rounded-2xl text-sm font-semibold transition flex items-center justify-center gap-2 ${
               showSavedOnly
                 ? "bg-primary-500 text-white"
                 : "bg-surface border border-border text-foreground hover:border-primary-500"
             }`}
           >
-            {showSavedOnly ? "✓ Showing Saved" : "View Saved Posts"}
+            {showSavedOnly ? (
+              <CiBookmark className="w-3.5 h-3.5" />
+            ) : (
+              <FiBookmark className="w-3.5 h-3.5" />
+            )}
+            {showSavedOnly ? "Showing saved" : "Saved posts"}
           </motion.button>
 
-          <div className="bg-surface border border-border rounded-lg p-4 space-y-3">
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
-              <HiTrendingUp className="text-primary-500" />
-              Trending Topics
+          {/* Trending topics */}
+          <div className="bg-surface border border-border rounded-2xl p-4 space-y-2.5">
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <HiTrendingUp className="text-primary-500 w-4 h-4" />
+              Trending topics
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setTopicFilter("all")}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
                   topicFilter === "all"
                     ? "bg-primary-500 text-white"
-                    : "bg-background text-foreground border border-border hover:border-primary-500"
+                    : "bg-background text-text-muted border border-border hover:border-primary-500 hover:text-foreground"
                 }`}
               >
                 All
@@ -704,10 +717,10 @@ export default function Explore({ session }) {
                   onClick={() =>
                     setTopicFilter(topicFilter === tag ? "all" : tag)
                   }
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition ${
                     topicFilter === tag
                       ? "bg-primary-500 text-white"
-                      : "bg-background text-foreground border border-border hover:border-primary-500"
+                      : "bg-background text-text-muted border border-border hover:border-primary-500 hover:text-foreground"
                   }`}
                 >
                   #{tag}
@@ -715,22 +728,42 @@ export default function Explore({ session }) {
               ))}
             </div>
           </div>
-        </div>
+        </aside>
 
-        {/* ── MAIN FEED ── */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="bg-surface border border-border rounded-lg p-4">
-            <h1 className="text-2xl font-bold text-foreground">Bug Feed</h1>
-            <p className="text-text-muted text-sm">
-              {filteredPosts.length} post{filteredPosts.length !== 1 ? "s" : ""}
-              {searchQuery && ` matching "${searchQuery}"`}
-              {topicFilter !== "all" && ` in #${topicFilter}`} • Discover real
-              bugs and solutions
-            </p>
+        {/* ── MAIN FEED ──────────────────────────────── */}
+        <div className="lg:col-span-3">
+          {/* Feed header */}
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 lg:rounded-t-2xl lg:border lg:border-b-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-base font-bold text-foreground">
+                  Bug Feed
+                </h1>
+                <p className="text-[11px] text-text-muted mt-0.5">
+                  {filteredPosts.length} post
+                  {filteredPosts.length !== 1 ? "s" : ""}
+                  {searchQuery && ` · "${searchQuery}"`}
+                  {topicFilter !== "all" && ` · #${topicFilter}`}
+                </p>
+              </div>
+              {(searchQuery || topicFilter !== "all" || showSavedOnly) && (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setTopicFilter("all");
+                    setShowSavedOnly(false);
+                  }}
+                  className="text-xs text-primary-500 hover:underline flex items-center gap-1"
+                >
+                  <FiX className="w-3 h-3" /> Clear
+                </button>
+              )}
+            </div>
           </div>
 
+          {/* Posts */}
           {filteredPosts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="border border-t-0 border-border lg:rounded-b-2xl overflow-hidden divide-y divide-border">
               <AnimatePresence>
                 {filteredPosts.map((post, idx) => {
                   const liked = post.likedBy?.includes(userId);
@@ -742,194 +775,221 @@ export default function Explore({ session }) {
                   const dateObj = getDateObj(post.createdAt);
                   const relativeTime = getRelativeTime(dateObj);
                   const commentsExpanded = expandedComments[post.id];
-
-                  // All entries in the flat comments array
                   const allComments = post.comments || [];
-                  // Only top-level entries to seed the recursive tree
                   const topLevelComments = allComments
                     .filter((c) => !c.parentId)
                     .sort((a, b) => a.createdAt - b.createdAt);
                   const totalComments = allComments.length;
 
                   return (
-                    <motion.div
+                    <motion.article
                       key={post.id}
                       ref={(el) => {
                         postRefs.current[post.id] = el;
                       }}
                       data-post-id={post.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ delay: idx * 0.04 }}
-                      className="bg-surface border border-border rounded-lg p-5 space-y-4 hover:border-primary-500 transition"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      // BUG 3 FIX: was delay: idx * 0.04 with no upper bound.
+                      // For 50+ posts the last card had a 2s+ delay. Capped at 250ms.
+                      transition={{
+                        delay: Math.min(idx * 0.04, 0.25),
+                        duration: 0.25,
+                      }}
+                      className="bg-background hover:bg-surface/50 transition-colors duration-150"
                     >
-                      {/* POST HEADER */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <img
-                            src={
-                              post.authorImg ||
-                              `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`
-                            }
-                            className="w-10 h-10 rounded-full border border-border object-cover flex-shrink-0"
-                            alt={post.author}
-                          />
+                      {/* X-style: two-column layout inside each post */}
+                      <div className="px-4 pt-4 pb-3">
+                        <div className="flex gap-3">
+                          {/* Left: Avatar */}
+                          <div className="flex-shrink-0">
+                            <img
+                              src={
+                                post.authorImg ||
+                                `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`
+                              }
+                              className="w-10 h-10 rounded-full border border-border object-cover"
+                              alt={post.author}
+                            />
+                          </div>
+
+                          {/* Right: everything else */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-semibold text-foreground text-sm">
-                                {post.author || "Anonymous"}
-                              </p>
-                              {isTrending(post) && (
-                                <span className="bg-primary-500/20 text-primary-500 text-xs px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                                  <HiTrendingUp className="w-3 h-3" />
-                                  Trending
+                            {/* Header row */}
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 min-w-0">
+                                <span className="text-sm font-bold text-foreground truncate">
+                                  {post.author || "Anonymous"}
                                 </span>
+                                <span className="text-xs text-text-muted">
+                                  {getCountryFlag(post.country)} {post.country}{" "}
+                                  · {relativeTime}
+                                </span>
+                                {isTrending(post) && (
+                                  <span className="inline-flex items-center gap-1 bg-primary-500/15 text-primary-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary-500/20 flex-shrink-0">
+                                    <HiTrendingUp className="w-3 h-3" />
+                                    Hot
+                                  </span>
+                                )}
+                              </div>
+                              {isOwner && (
+                                <motion.button
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() =>
+                                    setDeleteModal({ open: true, post })
+                                  }
+                                  disabled={deletingPostId === post.id}
+                                  className="flex-shrink-0 p-1.5 rounded-full text-text-muted hover:bg-red-500/10 hover:text-red-400 transition disabled:opacity-40"
+                                >
+                                  <FiTrash2 className="w-3.5 h-3.5" />
+                                </motion.button>
                               )}
                             </div>
-                            <p className="text-text-muted text-xs">
-                              {getCountryFlag(post.country)} {post.country} •{" "}
-                              {relativeTime}
+
+                            {/* Title */}
+                            <h2 className="text-sm font-bold text-foreground leading-snug">
+                              {post.title}
+                            </h2>
+
+                            {/* Description */}
+                            <p className="text-sm text-foreground/80 mt-1 leading-relaxed line-clamp-3">
+                              {post.description}
                             </p>
-                          </div>
-                        </div>
 
-                        {/* DELETE — own posts only */}
-                        {isOwner && (
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => setDeleteModal({ open: true, post })}
-                            disabled={deletingPostId === post.id}
-                            title="Delete post"
-                            className="flex-shrink-0 ml-2 p-2 rounded-lg text-text-muted hover:bg-red-500/10 hover:text-red-400 transition disabled:opacity-40"
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </motion.button>
-                        )}
-                      </div>
+                            {/* Read more */}
+                            <Link href={`/post/${post.id}`}>
+                              <span className="inline-flex items-center gap-1 text-xs text-primary-500 hover:underline mt-1">
+                                Read more <FiArrowRight className="w-3 h-3" />
+                              </span>
+                            </Link>
 
-                      {/* POST CONTENT */}
-                      <div className="space-y-2">
-                        <h2 className="text-lg font-bold text-foreground">
-                          {post.title}
-                        </h2>
-                        <div className="space-y-2">
-                          <p className="text-sm line-clamp-3">
-                            {post.description}
-                          </p>
+                            {/* Tags */}
+                            {(post.tags || post.topics)?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {(post.tags || post.topics || []).map((tag) => (
+                                  <button
+                                    key={tag}
+                                    onClick={() =>
+                                      setTopicFilter(tag.toLowerCase())
+                                    }
+                                    className="text-[11px] text-primary-500 hover:underline font-medium"
+                                  >
+                                    #{tag}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
 
-                          <Link href={`/post/${post.id}`}>
-                            <button className="flex items-center gap-1 text-xs text-primary-500 hover:underline">
-                              Read More <FiArrowRight className="w-3 h-3" />
-                            </button>
-                          </Link>
-                        </div>
-                        {(post.tags || post.topics) && (
-                          <div className="flex flex-wrap gap-1 pt-1">
-                            {(post.tags || post.topics || []).map((tag) => (
-                              <button
-                                key={tag}
-                                onClick={() =>
-                                  setTopicFilter(tag.toLowerCase())
-                                }
-                                className="text-xs text-primary-500 hover:underline"
+                            {/* ── X-style action bar ── */}
+                            <div className="flex items-center justify-between mt-3 -mx-1.5">
+                              {/* Comments */}
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleComments(post.id)}
+                                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium transition group ${
+                                  commentsExpanded
+                                    ? "text-primary-500"
+                                    : "text-text-muted hover:text-primary-500"
+                                }`}
                               >
-                                #{tag}
-                              </button>
-                            ))}
+                                <span
+                                  className={`p-1 rounded-full transition ${commentsExpanded ? "bg-primary-500/15" : "group-hover:bg-primary-500/10"}`}
+                                >
+                                  <FiMessageCircle className="w-4 h-4" />
+                                </span>
+                                {totalComments > 0 && (
+                                  <span>{totalComments}</span>
+                                )}
+                              </motion.button>
+
+                              {/* Like */}
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleLike(post)}
+                                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium transition group ${
+                                  liked
+                                    ? "text-red-400"
+                                    : "text-text-muted hover:text-red-400"
+                                }`}
+                              >
+                                <span
+                                  className={`p-1 rounded-full transition ${liked ? "bg-red-500/15" : "group-hover:bg-red-500/10"}`}
+                                >
+                                  {liked ? (
+                                    <AiFillHeart className="w-4 h-4" />
+                                  ) : (
+                                    <FiHeart className="w-4 h-4" />
+                                  )}
+                                </span>
+                                {(post.likedBy?.length || 0) > 0 && (
+                                  <span>{post.likedBy.length}</span>
+                                )}
+                              </motion.button>
+
+                              {/* Share */}
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => sharePost(post)}
+                                className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium text-text-muted hover:text-primary-500 transition group"
+                              >
+                                <span className="p-1 rounded-full group-hover:bg-primary-500/10 transition">
+                                  <FiShare2 className="w-4 h-4" />
+                                </span>
+                                {(post.shares || 0) > 0 && (
+                                  <span>{post.shares}</span>
+                                )}
+                              </motion.button>
+
+                              {/* Save */}
+                              <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => toggleSave(post)}
+                                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-medium transition group ${
+                                  saved
+                                    ? "text-primary-500"
+                                    : "text-text-muted hover:text-primary-500"
+                                }`}
+                              >
+                                <span
+                                  className={`p-1 rounded-full transition ${saved ? "bg-primary-500/15" : "group-hover:bg-primary-500/10"}`}
+                                >
+                                  {saved ? (
+                                    <CiBookmark className="w-4 h-4" />
+                                  ) : (
+                                    <FiBookmark className="w-4 h-4" />
+                                  )}
+                                </span>
+                              </motion.button>
+
+                              {/* Views — display only */}
+                              <span className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-text-muted">
+                                <FiEye className="w-3.5 h-3.5" />
+                                {post.viewedBy?.length || 0}
+                              </span>
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      {/* STATS ROW */}
-                      <div className="flex gap-4 text-xs text-text-muted pt-2 border-t border-border flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <FiEye className="w-4 h-4" />
-                          {post.viewedBy?.length || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FiHeart className="w-4 h-4" />
-                          {post.likedBy?.length || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FiShare2 className="w-4 h-4" />
-                          {post.shares || 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <FiMessageCircle className="w-4 h-4" />
-                          {totalComments}
-                        </span>
-                      </div>
-
-                      {/* ACTION BUTTONS */}
-                      <div className="flex gap-2 pt-2 border-t border-border">
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => toggleLike(post)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-sm transition ${
-                            liked
-                              ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                              : "bg-background text-foreground hover:bg-surface"
-                          }`}
-                        >
-                          {liked ? (
-                            <AiFillHeart className="w-4 h-4" />
-                          ) : (
-                            <FiHeart className="w-4 h-4" />
-                          )}
-                          Like
-                        </motion.button>
-
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => toggleSave(post)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
-                            saved
-                              ? "bg-primary-500/20 text-primary-500 hover:bg-primary-500/30"
-                              : "bg-background text-foreground hover:bg-surface"
-                          }`}
-                        >
-                          <FiBookmark className="w-4 h-4" />
-                          Save
-                        </motion.button>
-
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => sharePost(post)}
-                          className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg bg-background text-foreground hover:bg-surface font-semibold text-sm transition"
-                        >
-                          <FiShare2 className="w-4 h-4" />
-                          Share
-                        </motion.button>
-
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => toggleComments(post.id)}
-                          className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg font-semibold text-sm transition ${
-                            commentsExpanded
-                              ? "bg-primary-500/20 text-primary-500"
-                              : "bg-background text-foreground hover:bg-surface"
-                          }`}
-                        >
-                          <FiMessageCircle className="w-4 h-4" />
-                          {totalComments > 0 ? totalComments : "Chat"}
-                        </motion.button>
-                      </div>
-
-                      {/* COMMENT SECTION */}
+                      {/* ── COMMENT SECTION ─────────────────────────
+                          BUG 2 FIX: was exit={{ opacity: 0, height: 0 }}
+                          Framer Motion has to measure "auto" height before
+                          animating to 0, causing a one-frame full-height snap.
+                          Fix: exit with opacity only — smooth fade, no snap. */}
                       <AnimatePresence>
                         {commentsExpanded && (
                           <motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
+                            exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
+                            className="overflow-hidden border-t border-border/50"
                           >
-                            <div className="pt-2 space-y-3">
-                              {/* Recursive thread */}
+                            <div className="px-4 py-3 space-y-4">
+                              {/* Thread */}
                               {topLevelComments.length > 0 ? (
-                                <div className="space-y-2">
+                                <div className="space-y-4">
                                   {topLevelComments.map((comment) => (
                                     <CommentNode
                                       key={comment.id}
@@ -945,22 +1005,22 @@ export default function Explore({ session }) {
                                 </div>
                               ) : (
                                 <p className="text-xs text-text-muted text-center py-2">
-                                  No comments yet. Be the first!
+                                  No comments yet — be the first!
                                 </p>
                               )}
 
-                              {/* New top-level comment — isolated state, no lag */}
-                              <div className="flex gap-2 items-center pt-1">
+                              {/* New top-level comment */}
+                              <div className="flex gap-3 items-center pt-1 border-t border-border/40">
                                 <img
                                   src={
                                     userImg ||
                                     `https://api.dicebear.com/7.x/identicon/svg?seed=${userUsername}`
                                   }
-                                  className="w-8 h-8 rounded-full border border-border object-cover flex-shrink-0"
+                                  className="w-7 h-7 rounded-full border border-border object-cover flex-shrink-0"
                                   alt="You"
                                 />
                                 <CommentInputBox
-                                  placeholder="Write a comment…"
+                                  placeholder="Add a comment…"
                                   onSubmit={(text) => addComment(post.id, text)}
                                 />
                               </div>
@@ -968,17 +1028,17 @@ export default function Explore({ session }) {
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </motion.div>
+                    </motion.article>
                   );
                 })}
               </AnimatePresence>
             </div>
           ) : (
-            <div className="bg-surface border border-border rounded-lg p-12 text-center space-y-3">
-              <p className="text-text-muted">
+            <div className="border border-t-0 border-border lg:rounded-b-2xl p-16 text-center space-y-3">
+              <p className="text-text-muted text-sm">
                 {searchQuery || topicFilter !== "all"
-                  ? "No posts match your filters. Try a different search."
-                  : "No posts found. Check back later!"}
+                  ? "No posts match your filters."
+                  : "No posts yet. Check back soon!"}
               </p>
               {(searchQuery || topicFilter !== "all") && (
                 <button
@@ -995,6 +1055,8 @@ export default function Explore({ session }) {
           )}
         </div>
       </div>
+
+      {/* ── DELETE MODAL ─────────────────────────────── */}
       <Dialog
         open={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, post: null })}
@@ -1002,36 +1064,35 @@ export default function Explore({ session }) {
           sx: {
             backgroundColor: "var(--surface)",
             color: "var(--foreground)",
-            borderRadius: "12px",
+            borderRadius: "16px",
             border: "1px solid var(--border)",
             minWidth: "320px",
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>Delete Post</DialogTitle>
-
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Delete post
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ color: "var(--text-muted)" }}>
-            Whoa! Careful Now 😅 You don't want to do what
-            you would regret. This action cannot be undone. Are you sure you want to delete the post titled "
-            <span style={{ fontWeight: 500, color: "var(--foreground)" }}>
+            Whoa! Careful now 😅 — this can't be undone. Delete &quot;
+            <span style={{ fontWeight: 600, color: "var(--foreground)" }}>
               {deleteModal.post?.title}
             </span>
-            "?
+            &quot;?
           </Typography>
         </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
             onClick={() => setDeleteModal({ open: false, post: null })}
             sx={{
               textTransform: "none",
               color: "var(--text-muted)",
+              borderRadius: "8px",
             }}
           >
             Cancel
           </Button>
-
           <Button
             onClick={deletePost}
             disabled={deletingPostId === deleteModal.post?.id}
@@ -1039,12 +1100,11 @@ export default function Explore({ session }) {
               textTransform: "none",
               backgroundColor: "rgba(239,68,68,0.15)",
               color: "#f87171",
-              "&:hover": {
-                backgroundColor: "rgba(239,68,68,0.25)",
-              },
+              borderRadius: "8px",
+              "&:hover": { backgroundColor: "rgba(239,68,68,0.25)" },
             }}
           >
-            {deletingPostId === deleteModal.post?.id ? "Deleting..." : "Delete"}
+            {deletingPostId === deleteModal.post?.id ? "Deleting…" : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>
