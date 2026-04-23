@@ -163,17 +163,12 @@ function AmbientBG({ shouldReduceMotion }) {
 }
 
 // ── Post card ──────────────────────────────────
-function PostCard({ post, variant = "default", index = 0 }) {
+function PostCard({ post, variant = "default" }) {
   const isTrending = variant === "trending";
   const score = getTrendingScore(post);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}    
-      viewport={{ once: true }}             
-      transition={{ delay: index * 0.06, duration: 0.35 }}
-    >
+    <div>
       <Link href="/explore" className="block group">
         <div
           className={`bg-surface border rounded-2xl p-4 transition-all duration-200 hover:border-primary-500 hover:shadow-[0_0_20px_rgba(14,165,233,0.08)] ${
@@ -251,7 +246,7 @@ function PostCard({ post, variant = "default", index = 0 }) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 
@@ -575,13 +570,8 @@ export default function Home() {
                     <SkeletonCard key={i} />
                   ))
                 ) : trending.length > 0 ? (
-                  trending.map((post, i) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      variant="trending"
-                      index={i}
-                    />
+                  trending.map((post) => (
+                    <PostCard key={post.id} post={post} variant="trending" />
                   ))
                 ) : (
                   <div className="bg-surface border border-border rounded-2xl p-8 text-center">
@@ -614,13 +604,8 @@ export default function Home() {
                     <SkeletonCard key={i} />
                   ))
                 ) : recent.length > 0 ? (
-                  recent.map((post, i) => (
-                    <PostCard
-                      key={post.id}
-                      post={post}
-                      variant="recent"
-                      index={i}
-                    />
+                  recent.map((post) => (
+                    <PostCard key={post.id} post={post} variant="recent" />
                   ))
                 ) : (
                   <div className="bg-surface border border-border rounded-2xl p-8 text-center">
