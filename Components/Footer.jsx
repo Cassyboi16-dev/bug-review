@@ -52,8 +52,8 @@ export default function Footer() {
         <div className="flex items-center justify-center gap-5 mt-8">
           <SocialIcon icon={<FaXTwitter />} href="https://x.com/BugReviewHQ" />
           <SocialIcon icon={<FaInstagram />} href="https://instagram.com/bugreview" />
-          <SocialIcon icon={<FaDiscord />} href="https://discord.gg/bugreview" />
-          <SocialIcon icon={<IoLogoGithub />} href="https://github.com/bugreview" />
+          <SocialIcon icon={<FaDiscord />} href="https://discord.gg/V3XURyxCU" />
+          <SocialIcon icon={<IoLogoGithub />} href="https://github.com/Cassyboi16-dev/bug-review" />
         </div>
 
         {/* BOTTOM BAR */}
