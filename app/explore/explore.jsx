@@ -24,6 +24,7 @@ import { FiArrowRight } from "react-icons/fi";
 import { useEffect, useState, useMemo, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatLanguageLabel } from "@/Components/CodeSnippetBlock";
 
 import {
   FiHeart,
@@ -334,6 +335,12 @@ export default function Explore({ session }) {
   const [expandedComments, setExpandedComments] = useState({});
   const [deletingPostId, setDeletingPostId] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, post: null });
+  const [solveModal, setSolveModal] = useState({
+    open: false,
+    post: null,
+    text: "",
+  });
+  const [solvingPostId, setSolvingPostId] = useState(null);
 
   const viewedThisSession = useRef(new Set());
   const postRefs = useRef({});
@@ -424,6 +431,8 @@ export default function Explore({ session }) {
         (p) =>
           p.title?.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q) ||
+          p.codeLanguage?.toLowerCase().includes(q) ||
+          p.solutionText?.toLowerCase().includes(q) ||
           p.author?.toLowerCase().includes(q) ||
           (p.tags || []).some((t) => t.toLowerCase().includes(q)) ||
           (p.topics || []).some((t) => t.toLowerCase().includes(q)) ||
@@ -618,6 +627,39 @@ export default function Explore({ session }) {
 
   const toggleComments = (postId) =>
     setExpandedComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
+
+  const openSolveModal = (post) => {
+    setSolveModal({
+      open: true,
+      post,
+      text: post.solutionText || "",
+    });
+  };
+
+  const closeSolveModal = () => {
+    if (solvingPostId) return;
+    setSolveModal({ open: false, post: null, text: "" });
+  };
+
+  const markPostSolved = async () => {
+    if (!solveModal.post) return;
+
+    setSolvingPostId(solveModal.post.id);
+
+    try {
+      await updateDoc(doc(db, "bugPosts", solveModal.post.id), {
+        solved: true,
+        solvedAt: Date.now(),
+        solutionText: solveModal.text.trim(),
+      });
+      toast.success("Marked as solved");
+      setSolveModal({ open: false, post: null, text: "" });
+    } catch {
+      toast.error("Failed to mark post as solved");
+    } finally {
+      setSolvingPostId(null);
+    }
+  };
 
   // ─────────────────────────────────────────────
   // RENDER
@@ -832,6 +874,11 @@ export default function Explore({ session }) {
                                     Hot
                                   </span>
                                 )}
+                                {post.solved && (
+                                  <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">
+                                    Solved
+                                  </span>
+                                )}
                               </div>
                               {isOwner && (
                                 <motion.button
@@ -857,12 +904,41 @@ export default function Explore({ session }) {
                               {post.description}
                             </p>
 
+                            {post.codeSnippet?.trim() && (
+                              <p className="mt-3 text-[11px] text-text-muted">
+                                Code: {formatLanguageLabel(post.codeLanguage)}
+                              </p>
+                            )}
+
                             {/* Read more */}
                             <Link href={`/post/${post.id}`}>
                               <span className="inline-flex items-center gap-1 text-xs text-primary-500 hover:underline mt-1">
                                 Read more <FiArrowRight className="w-3 h-3" />
                               </span>
                             </Link>
+
+                            {(isOwner || post.solved) && (
+                              <div className="mt-3">
+                                {isOwner && !post.solved && (
+                                  <button
+                                    onClick={() => openSolveModal(post)}
+                                    className="text-[11px] font-semibold text-emerald-500 hover:underline"
+                                  >
+                                    Mark as solved
+                                  </button>
+                                )}
+
+                                {isOwner && post.solved && (
+                                  <button
+                                    onClick={() => openSolveModal(post)}
+                                    className="text-[11px] font-semibold text-emerald-500 hover:underline"
+                                  >
+                                    Update solution
+                                  </button>
+                                )}
+
+                              </div>
+                            )}
 
                             {/* Tags */}
                             {(post.tags || post.topics)?.length > 0 && (
@@ -1105,6 +1181,72 @@ export default function Explore({ session }) {
             }}
           >
             {deletingPostId === deleteModal.post?.id ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={solveModal.open}
+        onClose={closeSolveModal}
+        PaperProps={{
+          sx: {
+            backgroundColor: "var(--surface)",
+            color: "var(--foreground)",
+            borderRadius: "16px",
+            border: "1px solid var(--border)",
+            minWidth: "320px",
+            maxWidth: "560px",
+            width: "100%",
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem" }}>
+          Mark post as solved
+        </DialogTitle>
+        <DialogContent sx={{ pt: "8px !important" }}>
+          <Typography variant="body2" sx={{ color: "var(--text-muted)", mb: 2 }}>
+            Share the fix that worked for you. If you want, you can include a
+            code block using triple backticks and the language, like
+            <br />
+            <code>```javascript</code>
+          </Typography>
+          <textarea
+            value={solveModal.text}
+            onChange={(event) =>
+              setSolveModal((current) => ({
+                ...current,
+                text: event.target.value,
+              }))
+            }
+            rows={8}
+            placeholder="Tell people what solved the issue for you. Add a code snippet here too if it helps."
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-text-muted outline-none"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={closeSolveModal}
+            disabled={Boolean(solvingPostId)}
+            sx={{
+              textTransform: "none",
+              color: "var(--text-muted)",
+              borderRadius: "8px",
+            }}
+          >
+            Don&apos;t proceed
+          </Button>
+          <Button
+            onClick={markPostSolved}
+            disabled={Boolean(solvingPostId)}
+            sx={{
+              textTransform: "none",
+              backgroundColor: "rgba(16,185,129,0.14)",
+              color: "#10b981",
+              borderRadius: "8px",
+              "&:hover": { backgroundColor: "rgba(16,185,129,0.24)" },
+            }}
+          >
+            {solvingPostId ? "Saving..." : "Proceed"}
           </Button>
         </DialogActions>
       </Dialog>

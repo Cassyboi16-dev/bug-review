@@ -2,21 +2,33 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession, signOut, signIn } from "next-auth/react";
 import Avatar from "@mui/material/Avatar";
 
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-import { FiMoon, FiSun } from "react-icons/fi";
+import { FiMonitor, FiMoon, FiSun } from "react-icons/fi";
+import {
+  THEME_OPTIONS,
+  applyThemePreference,
+  getStoredThemePreference,
+  resolveThemePreference,
+} from "@/Components/theme";
+
+function ThemeIcon({ preference, resolvedTheme }) {
+  if (preference === "system") return <FiMonitor />;
+  return resolvedTheme === "dark" ? <FiMoon /> : <FiSun />;
+}
 
 export default function Navbar() {
   const { data: session, status } = useSession();
 
   const [navOpen, setNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const [theme, setTheme] = useState("system");
+  const [themePreference, setThemePreference] = useState("system");
+  const [resolvedTheme, setResolvedTheme] = useState("light");
 
   const moreRef = useRef(null);
 
@@ -45,36 +57,59 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const applyTheme = (value) => {
-      const root = document.documentElement;
-      root.classList.remove("light", "dark");
+    const preference =
+      document.documentElement.dataset.themePreference ||
+      getStoredThemePreference();
+    const resolved =
+      document.documentElement.dataset.themeResolved ||
+      resolveThemePreference(preference);
 
-      if (value === "dark") {
-        root.classList.add("dark");
-      } else if (value === "light") {
-        root.classList.add("light");
-      }
+    setThemePreference(preference);
+    setResolvedTheme(resolved);
 
-      window.localStorage.setItem("bugreview-theme", value);
-      window.dispatchEvent(new CustomEvent("theme-change", { detail: value }));
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const handleMediaChange = () => {
+      const nextPreference =
+        document.documentElement.dataset.themePreference ||
+        getStoredThemePreference();
+
+      if (nextPreference !== "system") return;
+
+      const nextResolved = applyThemePreference("system", false);
+      setThemePreference("system");
+      setResolvedTheme(nextResolved);
     };
 
-    const storedTheme =
-      window.localStorage.getItem("bugreview-theme") || "system";
-    setTheme(storedTheme);
-    applyTheme(storedTheme);
+    const handleThemeChange = (event) => {
+      const detail = event.detail || {};
+      setThemePreference(detail.preference || getStoredThemePreference());
+      setResolvedTheme(
+        detail.resolvedTheme ||
+          resolveThemePreference(detail.preference || "system"),
+      );
+    };
+
+    mediaQuery.addEventListener("change", handleMediaChange);
+    window.addEventListener("theme-change", handleThemeChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaChange);
+      window.removeEventListener("theme-change", handleThemeChange);
+    };
   }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(nextTheme);
-    window.localStorage.setItem("bugreview-theme", nextTheme);
-    window.dispatchEvent(
-      new CustomEvent("theme-change", { detail: nextTheme }),
-    );
+  const setTheme = (nextPreference) => {
+    const nextResolved = applyThemePreference(nextPreference);
+    setThemePreference(nextPreference);
+    setResolvedTheme(nextResolved);
+  };
+
+  const cycleTheme = () => {
+    const currentIndex = THEME_OPTIONS.indexOf(themePreference);
+    const nextPreference =
+      THEME_OPTIONS[(currentIndex + 1) % THEME_OPTIONS.length];
+    setTheme(nextPreference);
   };
 
   if (status === "loading") return null;
@@ -98,7 +133,7 @@ export default function Navbar() {
             <Link
               key={item.label}
               href={item.url}
-              className="hover:text-emerald-400 transition"
+              className="hover:text-primary-500 transition"
             >
               {item.label}
             </Link>
@@ -131,12 +166,15 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={toggleTheme}
-            className="hidden sm:inline-flex items-center justify-center rounded-lg border border-border bg-surface-muted p-2 text-text-muted hover:bg-background transition"
-            aria-label="Toggle site theme"
-            title="Toggle site theme"
+            onClick={cycleTheme}
+            className="hidden sm:inline-flex items-center justify-center rounded-lg border border-border bg-surface-muted p-2 text-text-muted hover:bg-background hover:text-foreground transition"
+            aria-label={`Theme mode: ${themePreference}`}
+            title={`Theme mode: ${themePreference}`}
           >
-            {theme === "dark" ? <FiSun /> : <FiMoon />}
+            <ThemeIcon
+              preference={themePreference}
+              resolvedTheme={resolvedTheme}
+            />
           </button>
 
           {session ? (
@@ -146,36 +184,56 @@ export default function Navbar() {
           ) : (
             <Link
               href="/signin"
-              className="text-gray-300 hover:text-emerald-400 hover:border-b-2 pb-2 border-transparent hover:border-emerald-400 flex items-center gap-1"
+              className="text-text-muted hover:text-primary-500 pb-2 border-transparent hover:border-primary-500 hover:border-b-2 flex items-center gap-1"
             >
               <PiUser />
               Sign in
             </Link>
           )}
 
-          {/* MOBILE MENU BUTTON */}
           <button
             onClick={() => setNavOpen(!navOpen)}
-            className="md:hidden text-white text-xl"
+            className="md:hidden text-foreground text-xl"
+            aria-label="Toggle navigation menu"
           >
             {navOpen ? <IoMdClose /> : <TbMenu />}
           </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
       {navOpen && (
-        <div className="md:hidden bg-surface dark:bg-[#050816] border-t border-border px-4 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-surface border-t border-border px-4 py-4 flex flex-col gap-4">
           {[...mainLinks, ...extraLinks].map((item) => (
             <Link
               key={item.label}
               href={item.url}
               onClick={() => setNavOpen(false)}
-              className="text-gray-300 hover:text-white"
+              className="text-text-muted hover:text-foreground"
             >
               {item.label}
             </Link>
           ))}
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+              Theme
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {THEME_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => setTheme(option)}
+                  className={`rounded-lg border px-3 py-2 text-xs font-semibold capitalize transition ${
+                    themePreference === option
+                      ? "border-primary-500 bg-primary-500 text-white"
+                      : "border-border bg-background text-text-muted"
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {session ? (
             <button
@@ -187,7 +245,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => signIn("google", { callbackUrl: "/upload" })}
-              className="text-emerald-400 text-left"
+              className="text-primary-500 text-left"
             >
               Sign in
             </button>

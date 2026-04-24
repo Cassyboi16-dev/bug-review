@@ -29,6 +29,10 @@ import {
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
 import { HiTrendingUp } from "react-icons/hi";
+import {
+  CodeSnippetPreview,
+  RichTextWithCode,
+} from "@/Components/CodeSnippetBlock";
 
 // ─── Country flag ──────────────────────────────
 const COUNTRY_CODES = {
@@ -341,13 +345,20 @@ export default function PostPage() {
           className="bg-surface border border-border rounded-2xl overflow-hidden"
         >
           {/* Category bar */}
-          {(post.category || isTrending) && (
+          {(post.category || isTrending || post.solved) && (
             <div className="flex items-center justify-between px-5 py-2.5 border-b border-border bg-background/40">
-              {post.category && (
-                <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-                  {post.category}
-                </span>
-              )}
+              <div className="flex items-center gap-2 flex-wrap">
+                {post.category && (
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-text-muted">
+                    {post.category}
+                  </span>
+                )}
+                {post.solved && (
+                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-0.5 rounded-full">
+                    Solved
+                  </span>
+                )}
+              </div>
               {isTrending && (
                 <span className="flex items-center gap-1 text-[10px] font-bold text-primary-500 bg-primary-500/10 border border-primary-500/25 px-2.5 py-0.5 rounded-full ml-auto">
                   <HiTrendingUp className="w-3 h-3" /> Trending
@@ -395,6 +406,27 @@ export default function PostPage() {
             <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap break-words">
               {post.description}
             </p>
+
+            <CodeSnippetPreview
+              code={post.codeSnippet}
+              language={post.codeLanguage}
+            />
+
+            {post.solved && post.solutionText?.trim() && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-500">
+                    Shared solution
+                  </p>
+                  {post.solvedAt && (
+                    <span className="text-[11px] text-text-muted">
+                      {getRelativeTime(post.solvedAt)}
+                    </span>
+                  )}
+                </div>
+                <RichTextWithCode text={post.solutionText} />
+              </div>
+            )}
 
             {/* Tags */}
             {(post.tags || post.topics) && (post.tags || post.topics).length > 0 && (
