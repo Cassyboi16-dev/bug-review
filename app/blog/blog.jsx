@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import toast from "react-hot-toast";
@@ -18,6 +18,7 @@ function estimateReadTime(content) {
 
 export default function BlogWorkspace({ session }) {
   const router = useRouter();
+  const composerRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [verificationForm, setVerificationForm] = useState({
     reason: "",
@@ -156,17 +157,55 @@ export default function BlogWorkspace({ session }) {
     }
   };
 
+  const openComposer = () => {
+    composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <main className="min-h-dvh bg-background text-foreground px-4 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="rounded-2xl border border-border bg-surface p-6">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-            Blog workspace
-          </p>
-          <h1 className="mt-2 text-3xl font-bold">Write about tech and tech news</h1>
-          <p className="mt-2 text-sm text-text-muted">
-            Verification is required before publishing so readers can trust technical writeups, references, and news analysis. All blog posts must follow our terms, privacy, copyright, and community guidelines.
-          </p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+                Blog workspace
+              </p>
+              <h1 className="mt-2 text-3xl font-bold">Write about tech and tech news</h1>
+              <p className="mt-2 text-sm text-text-muted">
+                Verification is required before publishing so readers can trust technical writeups, references, and news analysis. All blog posts must follow our terms, privacy, copyright, and community guidelines.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {!canPublish && (
+                <button
+                  type="button"
+                  onClick={handleVerificationRequest}
+                  disabled={
+                    submittingVerification ||
+                    profile?.blogVerificationStatus === "pending"
+                  }
+                  className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {profile?.blogVerificationStatus === "pending"
+                    ? "Verification pending"
+                    : submittingVerification
+                      ? "Submitting..."
+                      : "Request verification"}
+                </button>
+              )}
+
+              {canPublish && (
+                <button
+                  type="button"
+                  onClick={openComposer}
+                  className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white"
+                >
+                  Post a blog
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {!canPublish && (
@@ -219,23 +258,37 @@ export default function BlogWorkspace({ session }) {
               By requesting blog access, you confirm that your posts will respect privacy, avoid doxxing or secret leakage, use attributed sources for news, and stay focused on technology-related topics.
             </div>
 
-            <button
-              type="button"
-              onClick={handleVerificationRequest}
-              disabled={submittingVerification || profile?.blogVerificationStatus === "pending"}
-              className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {profile?.blogVerificationStatus === "pending"
-                ? "Verification pending"
-                : submittingVerification
-                  ? "Submitting..."
-                  : "Request verification"}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleVerificationRequest}
+                disabled={
+                  submittingVerification ||
+                  profile?.blogVerificationStatus === "pending"
+                }
+                className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {profile?.blogVerificationStatus === "pending"
+                  ? "Verification pending"
+                  : submittingVerification
+                    ? "Submitting..."
+                    : "Request verification"}
+              </button>
+              <Link
+                href="/privacy"
+                className="inline-flex rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground"
+              >
+                Review privacy
+              </Link>
+            </div>
           </section>
         )}
 
         {canPublish && (
-          <section className="rounded-2xl border border-border bg-surface p-6 space-y-5">
+          <section
+            ref={composerRef}
+            className="rounded-2xl border border-border bg-surface p-6 space-y-5"
+          >
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">
@@ -392,18 +445,26 @@ export default function BlogWorkspace({ session }) {
               Publishing confirms that the content is your own or properly attributed, does not expose private user data, and follows the BugReview Terms and Privacy Policy.
             </div>
 
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={publishing}
-              className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {publishing
-                ? "Saving..."
-                : blogForm.status === "draft"
-                  ? "Save draft"
-                  : "Publish post"}
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={publishing}
+                className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {publishing
+                  ? "Saving..."
+                  : blogForm.status === "draft"
+                    ? "Save draft"
+                    : "Publish post"}
+              </button>
+              <Link
+                href="/terms"
+                className="inline-flex rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground"
+              >
+                Review publishing terms
+              </Link>
+            </div>
           </section>
         )}
 
