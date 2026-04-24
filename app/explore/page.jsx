@@ -10,7 +10,7 @@ export default async function ExploreClient() {
   }
 
   return (
-    <main className="min-h-dvh bg-slate-950">
+    <main className="min-h-dvh bg-background">
       <Explore session={session} />
     </main>
   );

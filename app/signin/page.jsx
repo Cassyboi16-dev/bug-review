@@ -66,7 +66,7 @@ export default function SignIn() {
     <main className="bg-background text-foreground min-h-dvh flex justify-center items-center px-4">
       <Toaster position="bottom-center" />
 
-      <section className="w-full max-w-md flex flex-col gap-6">
+      <section className="w-full max-w-md flex flex-col gap-6 rounded-3xl border border-border bg-surface p-6 shadow-sm">
         <div className="text-center">
           <h1 className="text-4xl font-black text-primary-500">Welcome Back</h1>
           <p className="text-text-muted mt-2 text-sm">Sign in to continue</p>
@@ -97,7 +97,7 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("google")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border"
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
           >
             <FcGoogle />
             {loadingProvider === "google"
@@ -108,7 +108,7 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("github")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border"
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
           >
             <FaGithub />
             {loadingProvider === "github"
@@ -119,7 +119,7 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("discord")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border"
+            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
           >
             <FaDiscord />
             {loadingProvider === "discord"

@@ -10,6 +10,7 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import { IoMdGlobe } from "react-icons/io";
 import { FiArrowRight } from "react-icons/fi";
+import { CodeSnippetEditor } from "@/Components/CodeSnippetBlock";
 
 export default function UploadClient({ session }) {
   const author = session?.user?.username || session?.user?.name || "Anonymous";
@@ -58,13 +59,26 @@ export default function UploadClient({ session }) {
     el.style.height = el.scrollHeight + "px";
   };
 
-  const initialVal = { title: "", description: "", category: "", country };
+  const initialVal = {
+    title: "",
+    description: "",
+    category: "",
+    country,
+    codeLanguage: "",
+    codeSnippet: "",
+  };
 
   const formValid = Yup.object().shape({
     title: Yup.string().min(5).required("Title is required"),
     description: Yup.string().required("Description is required"),
     category: Yup.string().required("Category is required"),
     country: Yup.string().required("Country is required"),
+    codeLanguage: Yup.string().when("codeSnippet", {
+      is: (codeSnippet) => Boolean(codeSnippet?.trim()),
+      then: (schema) =>
+        schema.required("Programming language is required for code snippets"),
+      otherwise: (schema) => schema,
+    }),
   });
 
   const guidelines = [
@@ -139,6 +153,9 @@ export default function UploadClient({ session }) {
                 viewedBy: [authorId],
                 shares: 0,
                 comments: [],
+                solved: false,
+                solvedAt: null,
+                solutionText: "",
               });
               setStatus("success");
               successAudioRef.current?.play();
@@ -207,6 +224,50 @@ export default function UploadClient({ session }) {
                 component="p"
                 className="text-red-400 text-xs mt-2"
               />
+            </motion.div>
+
+            {/* CODE SNIPPET */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.18 }}
+              className="border-b border-border py-5 space-y-4"
+            >
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-widest text-text-muted mb-2">
+                  Programming Language
+                </label>
+                <Field
+                  name="codeLanguage"
+                  placeholder="JavaScript, Python, TypeScript..."
+                  className="w-full bg-transparent text-foreground placeholder-text-muted text-sm outline-none"
+                />
+                <ErrorMessage
+                  name="codeLanguage"
+                  component="p"
+                  className="text-red-400 text-xs mt-2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold uppercase tracking-widest text-text-muted mb-2">
+                  Code Snippet
+                </label>
+                <Field name="codeSnippet">
+                  {({ field, form }) => (
+                    <div>
+                      <CodeSnippetEditor
+                        value={field.value}
+                        onChange={(value) =>
+                          form.setFieldValue("codeSnippet", value)
+                        }
+                        language={form.values.codeLanguage}
+                        placeholder="Paste the exact code that is failing or behaving unexpectedly."
+                      />
+                    </div>
+                  )}
+                </Field>
+              </div>
             </motion.div>
 
             {/* CATEGORY + COUNTRY */}
