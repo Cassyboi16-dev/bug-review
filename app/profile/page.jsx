@@ -167,9 +167,24 @@ export default function Profile() {
               <p className="text-xs text-slate-300">
                 Status: {profile?.verifiedForBlogging ? "Verified" : profile?.blogVerificationStatus || "unverified"}
               </p>
-              <Link href="/blog" className="text-xs text-emerald-300 hover:underline">
-                Open blog workspace
-              </Link>
+              <div className="flex flex-wrap gap-3 pt-1">
+                {!profile?.verifiedForBlogging && (
+                  <Link
+                    href="/blog"
+                    className="inline-flex rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-black"
+                  >
+                    Request verification
+                  </Link>
+                )}
+                {profile?.verifiedForBlogging && (
+                  <Link
+                    href="/blog"
+                    className="inline-flex rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-black"
+                  >
+                    Write a blog post
+                  </Link>
+                )}
+              </div>
             </div>
 
             <form className="w-full mt-2">

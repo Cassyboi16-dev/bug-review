@@ -3,13 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useSession, signOut, signIn } from "next-auth/react";
 import Avatar from "@mui/material/Avatar";
 
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-import { FiMonitor, FiMoon, FiSun } from "react-icons/fi";
+import { FiChevronRight, FiMonitor, FiMoon, FiSun } from "react-icons/fi";
 import {
   THEME_OPTIONS,
   applyThemePreference,
@@ -24,6 +25,7 @@ function ThemeIcon({ preference, resolvedTheme }) {
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
 
   const [navOpen, setNavOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -40,7 +42,15 @@ export default function Navbar() {
   const extraLinks = [
     { label: "About", url: "/about" },
     { label: "Post Bug", url: "/upload" },
+    ...(session?.user?.verifiedForBlogging
+      ? [{ label: "Write Blog", url: "/blog" }]
+      : []),
   ];
+
+  useEffect(() => {
+    setNavOpen(false);
+    setMoreOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -202,54 +212,90 @@ export default function Navbar() {
       </div>
 
       {navOpen && (
-        <div className="md:hidden bg-surface border-t border-border px-4 py-4 flex flex-col gap-4">
-          {[...mainLinks, ...extraLinks].map((item) => (
-            <Link
-              key={item.label}
-              href={item.url}
-              onClick={() => setNavOpen(false)}
-              className="text-text-muted hover:text-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <div className="md:hidden">
+          <button
+            type="button"
+            aria-label="Close menu overlay"
+            onClick={() => setNavOpen(false)}
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px]"
+          />
 
-          <div className="space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-              Theme
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {THEME_OPTIONS.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setTheme(option)}
-                  className={`rounded-lg border px-3 py-2 text-xs font-semibold capitalize transition ${
-                    themePreference === option
-                      ? "border-primary-500 bg-primary-500 text-white"
-                      : "border-border bg-background text-text-muted"
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+          <div className="absolute inset-x-0 top-full z-50 border-t border-border bg-surface/95 px-4 pb-5 pt-4 shadow-xl backdrop-blur-2xl">
+            <div className="mx-auto max-w-6xl space-y-4">
+              <div className="rounded-2xl border border-border bg-background/80 p-2">
+                {[...mainLinks, ...extraLinks].map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.url}
+                    onClick={() => setNavOpen(false)}
+                    className="flex items-center justify-between rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-surface"
+                  >
+                    <span>{item.label}</span>
+                    <FiChevronRight className="h-4 w-4 text-text-muted" />
+                  </Link>
+                ))}
+              </div>
+
+              {!session?.user?.verifiedForBlogging && session && (
+                <div className="rounded-2xl border border-border bg-background/80 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+                    Blogging
+                  </p>
+                  <p className="mt-2 text-sm text-foreground">
+                    Request verification to unlock tech blog publishing.
+                  </p>
+                  <Link
+                    href="/blog"
+                    onClick={() => setNavOpen(false)}
+                    className="mt-3 inline-flex rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Request verification
+                  </Link>
+                </div>
+              )}
+
+              <div className="rounded-2xl border border-border bg-background/80 p-4 space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+                  Theme
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {THEME_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setTheme(option)}
+                      className={`rounded-xl border px-3 py-2.5 text-xs font-semibold capitalize transition ${
+                        themePreference === option
+                          ? "border-primary-500 bg-primary-500 text-white"
+                          : "border-border bg-surface text-text-muted"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-background/80 p-2">
+                {session ? (
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/signin" })}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm text-red-400 transition hover:bg-red-500/10"
+                  >
+                    <span>Sign out</span>
+                    <FiChevronRight className="h-4 w-4 text-red-300" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => signIn("google", { callbackUrl: "/upload" })}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm text-primary-500 transition hover:bg-primary-500/10"
+                  >
+                    <span>Sign in</span>
+                    <FiChevronRight className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-
-          {session ? (
-            <button
-              onClick={() => signOut({ callbackUrl: "/signin" })}
-              className="text-red-400 text-left"
-            >
-              Sign out
-            </button>
-          ) : (
-            <button
-              onClick={() => signIn("google", { callbackUrl: "/upload" })}
-              className="text-primary-500 text-left"
-            >
-              Sign in
-            </button>
-          )}
         </div>
       )}
     </header>
