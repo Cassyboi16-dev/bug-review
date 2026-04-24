@@ -34,6 +34,7 @@ import {
   RichTextWithCode,
 } from "@/Components/CodeSnippetBlock";
 import GitHubBadge from "@/Components/GitHubBadge";
+import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
 
 // ─── Country flag ──────────────────────────────
@@ -135,6 +136,7 @@ function CommentNode({ comment, allComments, depth, onAddReply }) {
                 username={comment.authorGithubUsername}
                 compact
               />
+              <BloggerBadge visible={comment.authorIsBlogger} compact />
               <span className="text-[10px] text-text-muted">{getRelativeTime(comment.createdAt)}</span>
             </div>
             <p className="text-sm text-foreground mt-1 break-words whitespace-pre-wrap leading-relaxed">
@@ -239,6 +241,7 @@ export default function PostPage() {
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
   const userProfileId = session?.user?.profileId || "";
+  const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
   const [post, setPost] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -314,6 +317,7 @@ export default function PostPage() {
         authorImg: userImg,
         authorGithubUrl: userGithubUrl,
         authorGithubUsername: userGithubUsername,
+        authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
       }),
@@ -333,6 +337,7 @@ export default function PostPage() {
         authorImg: userImg,
         authorGithubUrl: userGithubUrl,
         authorGithubUsername: userGithubUsername,
+        authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
       }),
@@ -405,6 +410,9 @@ export default function PostPage() {
                     username={post.authorGithubUsername}
                     compact
                   />
+                </div>
+                <div className="mt-1">
+                  <BloggerBadge visible={post.authorIsBlogger} compact />
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-text-muted mt-0.5 flex-wrap">
                   {post.country && (

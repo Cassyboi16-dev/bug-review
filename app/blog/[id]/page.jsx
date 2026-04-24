@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { doc, increment, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import GitHubBadge from "@/Components/GitHubBadge";
+import BloggerBadge from "@/Components/BloggerBadge";
 import {
   CodeSnippetPreview,
   RichTextWithCode,
@@ -73,6 +74,7 @@ export default function BlogPostPage() {
               href={post.authorGithubUrl}
               username={post.authorGithubUsername}
             />
+            <BloggerBadge visible={post.authorIsBlogger} />
           </div>
 
           <RichTextWithCode text={post.content} />

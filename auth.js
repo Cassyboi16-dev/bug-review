@@ -2,11 +2,13 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Github from "next-auth/providers/github";
 import Discord from "next-auth/providers/discord";
+import Credentials from "next-auth/providers/credentials";
 import {
   getUserProfileByEmail,
   getUserProfileById,
   upsertUserProfileFromAuth,
 } from "@/lib/server/userProfiles";
+import { verifyPassword } from "@/lib/server/passwords";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -21,6 +23,39 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Discord({
       clientId: process.env.AUTH_DISCORD_ID,
       clientSecret: process.env.AUTH_DISCORD_SECRET,
+    }),
+    Credentials({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email || "").trim().toLowerCase();
+        const password = String(credentials?.password || "");
+        if (!email || !password) return null;
+
+        const profile = await getUserProfileByEmail(email);
+        if (
+          !profile?.credentialPasswordHash ||
+          !profile?.credentialPasswordSalt ||
+          !verifyPassword(
+            password,
+            profile.credentialPasswordSalt,
+            profile.credentialPasswordHash,
+          )
+        ) {
+          return null;
+        }
+
+        return {
+          id: profile.id,
+          email: profile.email,
+          name: profile.name || profile.username,
+          image: profile.image || "",
+          username: profile.username || profile.name || "",
+        };
+      },
     }),
   ],
   callbacks: {
@@ -52,6 +87,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.blogVerificationStatus =
           profileDoc.blogVerificationStatus || "unverified";
         token.verifiedForBlogging = Boolean(profileDoc.verifiedForBlogging);
+        token.bloggerBadge = Boolean(profileDoc.bloggerBadge);
+        token.emailVerifiedForBlogging = Boolean(
+          profileDoc.emailVerifiedForBlogging,
+        );
+        token.phoneVerifiedForBlogging = Boolean(
+          profileDoc.phoneVerifiedForBlogging,
+        );
+        token.verificationEmail = profileDoc.verificationEmail || "";
+        token.verificationPhone = profileDoc.verificationPhone || "";
       }
 
       if (account?.provider) {
@@ -86,6 +130,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.verifiedForBlogging = Boolean(
         profileDoc?.verifiedForBlogging ?? token.verifiedForBlogging,
       );
+      session.user.bloggerBadge = Boolean(
+        profileDoc?.bloggerBadge ?? token.bloggerBadge,
+      );
+      session.user.emailVerifiedForBlogging = Boolean(
+        profileDoc?.emailVerifiedForBlogging ?? token.emailVerifiedForBlogging,
+      );
+      session.user.phoneVerifiedForBlogging = Boolean(
+        profileDoc?.phoneVerifiedForBlogging ?? token.phoneVerifiedForBlogging,
+      );
+      session.user.verificationEmail =
+        profileDoc?.verificationEmail || token.verificationEmail || "";
+      session.user.verificationPhone =
+        profileDoc?.verificationPhone || token.verificationPhone || "";
       session.user.activeProvider = token.activeProvider || "";
 
       return session;

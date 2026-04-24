@@ -10,7 +10,7 @@ import Avatar from "@mui/material/Avatar";
 import { PiUser } from "react-icons/pi";
 import { TbMenu } from "react-icons/tb";
 import { IoMdClose } from "react-icons/io";
-import { FiChevronRight, FiMonitor, FiMoon, FiSun } from "react-icons/fi";
+import { FiChevronRight, FiMonitor, FiMoon, FiPlus, FiSun } from "react-icons/fi";
 import {
   THEME_OPTIONS,
   applyThemePreference,
@@ -175,6 +175,16 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {session?.user?.verifiedForBlogging && (
+            <Link
+              href="/blog"
+              className="hidden sm:inline-flex items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white"
+            >
+              <FiPlus className="h-4 w-4" />
+              Create
+            </Link>
+          )}
+
           <button
             onClick={cycleTheme}
             className="hidden sm:inline-flex items-center justify-center rounded-lg border border-border bg-surface-muted p-2 text-text-muted hover:bg-background hover:text-foreground transition"
@@ -250,6 +260,19 @@ export default function Navbar() {
                     className="mt-3 inline-flex rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white"
                   >
                     Request verification
+                  </Link>
+                </div>
+              )}
+
+              {session?.user?.verifiedForBlogging && (
+                <div className="rounded-2xl border border-border bg-background/80 p-4">
+                  <Link
+                    href="/blog"
+                    onClick={() => setNavOpen(false)}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    <FiPlus className="h-4 w-4" />
+                    Create
                   </Link>
                 </div>
               )}

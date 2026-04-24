@@ -11,10 +11,12 @@ export async function POST(request) {
   const body = await request.json();
   const reason = String(body.reason || "").trim();
   const topics = String(body.topics || "").trim();
+  const verificationEmail = String(body.email || session.user.email || "").trim();
+  const verificationPhone = String(body.phone || "").trim();
 
-  if (!reason || !topics) {
+  if (!reason || !topics || !verificationEmail || !verificationPhone) {
     return NextResponse.json(
-      { error: "Reason and topics are required" },
+      { error: "Reason, topics, email, and phone are required" },
       { status: 400 },
     );
   }
@@ -22,7 +24,8 @@ export async function POST(request) {
   const requestId = `${session.user.profileId}_${Date.now()}`;
   await adminDb.collection("blogVerificationRequests").doc(requestId).set({
     userId: session.user.profileId,
-    email: session.user.email,
+    email: verificationEmail,
+    phone: verificationPhone,
     username: session.user.username || session.user.name || "Anonymous",
     reason,
     topics,
@@ -33,6 +36,8 @@ export async function POST(request) {
   await updateUserProfile(session.user.email, {
     blogVerificationStatus: "pending",
     blogVerificationRequestedAt: new Date().toISOString(),
+    verificationEmail,
+    verificationPhone,
   });
 
   return NextResponse.json({ ok: true });
