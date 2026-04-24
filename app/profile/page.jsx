@@ -1,21 +1,50 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
 import toast from "react-hot-toast";
-import { signOut } from "next-auth/react";
+import { db } from "@/config/firebase.config";
+import GitHubBadge from "@/Components/GitHubBadge";
+import { getAchievementDetails } from "@/lib/achievements";
 
 export default function Profile() {
   const { data: session, update } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [unlinkingGithub, setUnlinkingGithub] = useState(false);
+  const [profile, setProfile] = useState(null);
   const [username, setUsername] = useState(session?.user?.username || "");
 
-  if (!session) {
-    router.push("/signin");
-    return null;
-  }
+  useEffect(() => {
+    if (session === undefined) return;
+    if (!session) router.push("/signin");
+  }, [router, session]);
+
+  useEffect(() => {
+    if (!session?.user?.profileId) return;
+
+    const unsubscribe = onSnapshot(
+      doc(db, "users", session.user.profileId),
+      (snapshot) => {
+        if (!snapshot.exists()) return;
+        const data = { id: snapshot.id, ...snapshot.data() };
+        setProfile(data);
+        setUsername(data.username || session.user?.username || "");
+      },
+    );
+
+    return () => unsubscribe();
+  }, [session?.user?.profileId, session?.user?.username]);
+
+  const achievements = useMemo(
+    () => getAchievementDetails(profile?.achievements || []),
+    [profile?.achievements],
+  );
+
+  if (!session) return null;
 
   const handleUpdateUsername = async () => {
     if (!username.trim()) {
@@ -43,17 +72,33 @@ export default function Profile() {
     }
   };
 
+  const handleUnlinkGithub = async () => {
+    try {
+      setUnlinkingGithub(true);
+      const response = await fetch("/api/profile/unlink-github", {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to unlink GitHub");
+
+      await update({ githubProfileUrl: "" });
+      toast.success("GitHub badge removed");
+    } catch (error) {
+      toast.error("Failed to unlink GitHub");
+      console.error(error);
+    } finally {
+      setUnlinkingGithub(false);
+    }
+  };
+
   return (
     <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-4xl flex flex-col gap-10">
-        {/* HEADER */}
         <h1 className="text-center font-extrabold text-4xl md:text-6xl uppercase text-emerald-400 tracking-widest">
           {"<Profile />"}
         </h1>
 
-        {/* CARD CONTAINER */}
         <section className="grid md:grid-cols-2 gap-8">
-          {/* PROFILE CARD */}
           <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 flex flex-col items-center gap-4 shadow-lg">
             <img
               src={session?.user?.image || "/default-avatar.png"}
@@ -63,16 +108,71 @@ export default function Profile() {
 
             <div className="text-center space-y-1">
               <p className="text-lg font-semibold text-emerald-300">
-                {session?.user?.username || session?.user?.name}
+                {profile?.username || session?.user?.username || session?.user?.name}
               </p>
               <p className="text-sm text-gray-400">{session?.user?.email}</p>
               <p className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded mt-2">
-                ID: {session?.user?.id}
+                ID: {session?.user?.profileId || session?.user?.id}
               </p>
             </div>
 
-            {/* SIGN OUT */}
-            <form className="w-full mt-4">
+            <GitHubBadge
+              href={profile?.githubProfileUrl || session?.user?.githubProfileUrl}
+              username={profile?.githubUsername || session?.user?.githubUsername}
+            />
+
+            {profile?.githubProfileUrl && (
+              <button
+                type="button"
+                onClick={handleUnlinkGithub}
+                disabled={unlinkingGithub}
+                className="text-xs text-red-300 hover:text-red-200"
+              >
+                {unlinkingGithub ? "Unlinking..." : "Unlink GitHub"}
+              </button>
+            )}
+
+            <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
+              <p className="text-sm font-semibold text-emerald-300">
+                Milestones
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+                <span>Posts: {profile?.stats?.postsCount || 0}</span>
+                <span>Helpful fixes: {profile?.stats?.solutionsOfferedCount || 0}</span>
+                <span>Resolved posts: {profile?.stats?.solvedPostsCount || 0}</span>
+                <span>Blog posts: {profile?.stats?.blogPostsCount || 0}</span>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {achievements.length > 0 ? (
+                  achievements.map((achievement) => (
+                    <span
+                      key={achievement.key}
+                      className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-[11px] text-emerald-200"
+                    >
+                      {achievement.title}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    Your first milestone will appear here after your first contribution.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
+              <p className="text-sm font-semibold text-emerald-300">
+                Blogging Access
+              </p>
+              <p className="text-xs text-slate-300">
+                Status: {profile?.verifiedForBlogging ? "Verified" : profile?.blogVerificationStatus || "unverified"}
+              </p>
+              <Link href="/blog" className="text-xs text-emerald-300 hover:underline">
+                Open blog workspace
+              </Link>
+            </div>
+
+            <form className="w-full mt-2">
               <button
                 onClick={async () => {
                   await signOut({ callbackUrl: "/signin" });
@@ -85,14 +185,12 @@ export default function Profile() {
             </form>
           </div>
 
-          {/* UPDATE PROFILE CARD */}
           <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col gap-6">
             <h2 className="text-xl font-semibold text-emerald-300">
               Update Profile
             </h2>
 
             <div className="flex flex-col gap-4">
-              {/* NAME */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-gray-400">Name</label>
                 <input
@@ -103,7 +201,6 @@ export default function Profile() {
                 />
               </div>
 
-              {/* EMAIL */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm text-gray-400">Email</label>
                 <input
@@ -113,9 +210,22 @@ export default function Profile() {
                   className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition opacity-50"
                 />
               </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-gray-400">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition"
+                />
+              </div>
             </div>
 
-            {/* SAVE BUTTON */}
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs text-slate-300 leading-relaxed">
+              Provider badges and blogging access follow the profile records stored for your account. Blog verification helps us keep technical articles, news, and external references trustworthy for readers.
+            </div>
+
             <button
               onClick={handleUpdateUsername}
               disabled={loading}
@@ -126,10 +236,9 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* FOOTER FUN */}
         <p className="text-center text-xs text-gray-500 font-mono">
           {"User Signed In: "}{" "}
-          {session.user?.username || session.user?.name || "Unknown User"}
+          {profile?.username || session.user?.username || session.user?.name || "Unknown User"}
         </p>
       </div>
     </main>

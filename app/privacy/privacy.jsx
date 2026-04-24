@@ -23,26 +23,31 @@ export default function PrivacyPage() {
           <p>We may collect the following information:</p>
           <ul className="list-disc ml-5 space-y-1">
             <li>
-              Account information: name, email address, and profile image (via
-              Google authentication)
+              Account information: name, email address, profile image, linked
+              provider metadata, and optional GitHub profile details
             </li>
             <li>
               Geographic data: country information (collected through browser
               geolocation API with user permission)
             </li>
             <li>
-              Post metadata: timestamps, language preferences, and categories
-              you specify
+              Post metadata: timestamps, language preferences, categories,
+              solution markers, and blogging preferences you specify
             </li>
             <li>
               Engagement data: likes, bookmarks, shares, and comments on posts
+            </li>
+            <li>
+              Community profile data: achievement milestones, verification
+              requests, verification status, and blog author permissions
             </li>
           </ul>
 
           <h2 className="text-white font-semibold text-lg">2. User Content</h2>
           <p>
-            Any content you post (bugs, tutorials, comments) is stored in our
-            database and may be visible to other users on the platform.
+            Any content you post (bugs, tutorials, comments, solutions, and
+            blog posts) is stored in our database and may be visible to other
+            users on the platform.
           </p>
 
           <h2 className="text-white font-semibold text-lg">
@@ -53,6 +58,8 @@ export default function PrivacyPage() {
             <li>Display your posts on the platform</li>
             <li>Authenticate your account</li>
             <li>Improve user experience</li>
+            <li>Show linked provider badges and achievement milestones</li>
+            <li>Review blog verification requests and manage blog access</li>
           </ul>
 
           <h2 className="text-white font-semibold text-lg">4. Data Storage</h2>
@@ -85,8 +92,9 @@ export default function PrivacyPage() {
             We do not sell your personal data. We also do not share your
             personal information with third parties except for required
             infrastructure services like Firebase and authentication providers.
-            Your public posts, including country information and timestamps, are
-            visible to other platform users.
+            Your public posts, optional GitHub badge links, country information,
+            timestamps, and visible achievement indicators are available to
+            other platform users when you choose to contribute publicly.
           </p>
 
           <h2 className="text-white font-semibold text-lg">7. Your Rights</h2>

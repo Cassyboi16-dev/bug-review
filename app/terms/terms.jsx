@@ -23,16 +23,27 @@ export default function TermsPage() {
           </h2>
           <p>
             BugReview is a community-based platform where users can post coding
-            bugs, tutorials, and technical issues to receive help and share
-            knowledge.
+            bugs, tutorials, technical issues, and verified technology blog
+            posts to receive help and share knowledge.
           </p>
 
           <h2 className="text-white font-semibold text-lg">2. User Content</h2>
           <p>
             Users are responsible for any content they upload, including text,
-            links, images, and code snippets. You must not post harmful,
-            illegal, abusive, or copyrighted content that you do not own or have
-            permission to share.
+            links, images, code snippets, solutions, and blog articles. You
+            must not post harmful, illegal, abusive, misleading, plagiarized,
+            or copyrighted content that you do not own or have permission to
+            share.
+          </p>
+
+          <h2 className="text-white font-semibold text-lg">
+            2.2 Blog Publishing & Verification
+          </h2>
+          <p>
+            Blog publishing access may require a verification process. Verified
+            authors must keep their posts focused on technology topics, clearly
+            separate opinion from fact, and attribute third-party reporting or
+            source material when discussing tech news.
           </p>
 
           <h2 className="text-white font-semibold text-lg">
@@ -59,7 +70,19 @@ export default function TermsPage() {
           </h2>
           <p>
             We reserve the right to remove any content that violates community
-            guidelines or appears harmful, misleading, or spam-related.
+            guidelines or appears harmful, misleading, spam-related, privacy
+            invasive, or unsuitable for a verified blog/news section.
+          </p>
+
+          <h2 className="text-white font-semibold text-lg">
+            4.1 Badges, Milestones, and Linked Profiles
+          </h2>
+          <p>
+            BugReview may display public profile badges, linked GitHub
+            indicators, achievement milestones, and verification states to help
+            users evaluate contributions. These indicators are provided for
+            community context and may be updated, removed, or recalculated at
+            any time.
           </p>
 
           <h2 className="text-white font-semibold text-lg">

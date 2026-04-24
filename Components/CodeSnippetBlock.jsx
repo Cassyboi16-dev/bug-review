@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const LANGUAGE_LABELS = {
   bash: "Bash",
@@ -609,7 +609,14 @@ export function CodeSnippetPreview({
   compact = false,
   className = "",
 }) {
+  const [copied, setCopied] = useState(false);
   if (!code?.trim()) return null;
+
+  const copyCode = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
 
   return (
     <div
@@ -622,6 +629,15 @@ export function CodeSnippetPreview({
         <span className="text-[11px] text-text-muted">
           {formatLanguageLabel(language)}
         </span>
+      </div>
+      <div className="flex justify-end px-3 pt-2">
+        <button
+          type="button"
+          onClick={copyCode}
+          className="text-[11px] font-semibold text-primary-500 hover:underline"
+        >
+          {copied ? "Copied" : "Copy code"}
+        </button>
       </div>
       <div className="px-3 py-3">
         <HighlightedCode code={code} language={language} compact={compact} />
@@ -638,6 +654,7 @@ export function CodeSnippetEditor({
   rows = 8,
 }) {
   const overlayRef = useRef(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!overlayRef.current) return;
@@ -647,8 +664,21 @@ export function CodeSnippetEditor({
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted/70">
+      <div className="absolute right-3 top-3 z-20">
+        <button
+          type="button"
+          onClick={async () => {
+            await navigator.clipboard.writeText(value || "");
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1800);
+          }}
+          className="text-[11px] font-semibold text-primary-500 hover:underline"
+        >
+          {copied ? "Copied" : "Copy code"}
+        </button>
+      </div>
       {!value && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 px-4 py-3 text-sm text-text-muted">
+        <div className="pointer-events-none absolute inset-x-0 top-0 px-4 py-3 pr-24 text-sm text-text-muted">
           {placeholder}
         </div>
       )}

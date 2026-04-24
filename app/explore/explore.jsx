@@ -25,6 +25,8 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatLanguageLabel } from "@/Components/CodeSnippetBlock";
+import GitHubBadge from "@/Components/GitHubBadge";
+import { awardUserProgress } from "@/lib/client/gamification";
 
 import {
   FiHeart,
@@ -227,6 +229,11 @@ function CommentNode({
           <span className="text-xs font-bold text-foreground">
             {comment.author}
           </span>
+          <GitHubBadge
+            href={comment.authorGithubUrl}
+            username={comment.authorGithubUsername}
+            compact
+          />
           <span className="text-[11px] text-text-muted">
             · {getRelativeTime(new Date(comment.createdAt))}
           </span>
@@ -326,6 +333,9 @@ export default function Explore({ session }) {
   const userUsername =
     session?.user?.username || session?.user?.name || "Anonymous";
   const userImg = session?.user?.image || "";
+  const userGithubUrl = session?.user?.githubProfileUrl || "";
+  const userGithubUsername = session?.user?.githubUsername || "";
+  const userProfileId = session?.user?.profileId || "";
 
   const [posts, setPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -344,6 +354,14 @@ export default function Explore({ session }) {
 
   const viewedThisSession = useRef(new Set());
   const postRefs = useRef({});
+
+  const showAchievementToasts = (achievements) => {
+    achievements.forEach((achievement) => {
+      toast.success(`Achievement unlocked: ${achievement.title}`, {
+        duration: 2500,
+      });
+    });
+  };
 
   // ── Live Firestore feed ───────────────────────
   useEffect(() => {
@@ -592,6 +610,8 @@ export default function Explore({ session }) {
       authorId: userId,
       author: userUsername,
       authorImg: userImg,
+      authorGithubUrl: userGithubUrl,
+      authorGithubUsername: userGithubUsername,
       text,
       createdAt: Date.now(),
     };
@@ -599,6 +619,13 @@ export default function Explore({ session }) {
       await updateDoc(doc(db, "bugPosts", postId), {
         comments: arrayUnion(entry),
       });
+      const post = posts.find((item) => item.id === postId);
+      if (post && post.authorId && post.authorId !== userId) {
+        const achievements = await awardUserProgress(userProfileId, {
+          solutionsOfferedCount: 1,
+        });
+        showAchievementToasts(achievements);
+      }
       toast.success("Comment added 💬");
     } catch {
       toast.error("Failed to add comment");
@@ -612,6 +639,8 @@ export default function Explore({ session }) {
       authorId: userId,
       author: userUsername,
       authorImg: userImg,
+      authorGithubUrl: userGithubUrl,
+      authorGithubUsername: userGithubUsername,
       text,
       createdAt: Date.now(),
     };
@@ -619,6 +648,13 @@ export default function Explore({ session }) {
       await updateDoc(doc(db, "bugPosts", postId), {
         comments: arrayUnion(entry),
       });
+      const post = posts.find((item) => item.id === postId);
+      if (post && post.authorId && post.authorId !== userId) {
+        const achievements = await awardUserProgress(userProfileId, {
+          solutionsOfferedCount: 1,
+        });
+        showAchievementToasts(achievements);
+      }
       toast.success("Reply added ↩️");
     } catch {
       toast.error("Failed to add reply");
@@ -652,6 +688,10 @@ export default function Explore({ session }) {
         solvedAt: Date.now(),
         solutionText: solveModal.text.trim(),
       });
+      const achievements = await awardUserProgress(userProfileId, {
+        solvedPostsCount: 1,
+      });
+      showAchievementToasts(achievements);
       toast.success("Marked as solved");
       setSolveModal({ open: false, post: null, text: "" });
     } catch {
@@ -864,6 +904,11 @@ export default function Explore({ session }) {
                                 <span className="text-sm font-bold text-foreground truncate">
                                   {post.author || "Anonymous"}
                                 </span>
+                                <GitHubBadge
+                                  href={post.authorGithubUrl}
+                                  username={post.authorGithubUsername}
+                                  compact
+                                />
                                 <span className="text-xs text-text-muted">
                                   {getCountryFlag(post.country)} {post.country}{" "}
                                   · {relativeTime}
