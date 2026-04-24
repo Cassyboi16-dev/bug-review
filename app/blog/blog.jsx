@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { collection, doc, onSnapshot } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { db } from "@/config/firebase.config";
@@ -11,6 +12,13 @@ import {
   CodeSnippetPreview,
 } from "@/Components/CodeSnippetBlock";
 import { awardUserProgress } from "@/lib/client/gamification";
+import {
+  RecaptchaVerifier,
+  linkWithPhoneNumber,
+  reload,
+  sendEmailVerification,
+} from "firebase/auth";
+import { auth as firebaseAuth } from "@/config/firebase.config";
 
 function estimateReadTime(content) {
   return Math.max(1, Math.ceil(content.split(/\s+/).filter(Boolean).length / 200));
@@ -18,11 +26,17 @@ function estimateReadTime(content) {
 
 export default function BlogWorkspace({ session }) {
   const router = useRouter();
+  const { update } = useSession();
   const composerRef = useRef(null);
+  const recaptchaRef = useRef(null);
+  const phoneConfirmationRef = useRef(null);
   const [profile, setProfile] = useState(null);
   const [verificationForm, setVerificationForm] = useState({
     reason: "",
     topics: "",
+    email: session?.user?.verificationEmail || session?.user?.email || "",
+    phone: session?.user?.verificationPhone || "",
+    code: "",
   });
   const [blogForm, setBlogForm] = useState({
     title: "",
@@ -36,6 +50,10 @@ export default function BlogWorkspace({ session }) {
     status: "published",
   });
   const [submittingVerification, setSubmittingVerification] = useState(false);
+  const [sendingEmailVerification, setSendingEmailVerification] = useState(false);
+  const [sendingPhoneVerification, setSendingPhoneVerification] = useState(false);
+  const [confirmingPhoneVerification, setConfirmingPhoneVerification] =
+    useState(false);
   const [publishing, setPublishing] = useState(false);
   const [myPosts, setMyPosts] = useState([]);
 
@@ -66,13 +84,52 @@ export default function BlogWorkspace({ session }) {
   }, [session?.user?.profileId]);
 
   const canPublish = Boolean(profile?.verifiedForBlogging);
+  const emailVerified =
+    profile?.emailVerifiedForBlogging ||
+    firebaseAuth.currentUser?.emailVerified ||
+    false;
+  const phoneVerified = profile?.phoneVerifiedForBlogging || false;
   const readTime = useMemo(
     () => estimateReadTime(blogForm.content),
     [blogForm.content],
   );
 
+  useEffect(() => {
+    if (!session?.user?.email) return;
+
+    setVerificationForm((current) => ({
+      ...current,
+      email: current.email || session.user.email,
+      phone: current.phone || session.user.verificationPhone || "",
+    }));
+  }, [session?.user?.email, session?.user?.verificationPhone]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    if (!recaptchaRef.current) {
+      recaptchaRef.current = new RecaptchaVerifier(
+        firebaseAuth,
+        "blog-phone-recaptcha",
+        {
+          size: "invisible",
+        },
+      );
+    }
+
+    return () => {
+      recaptchaRef.current?.clear();
+      recaptchaRef.current = null;
+    };
+  }, []);
+
   const handleVerificationRequest = async () => {
-    if (!verificationForm.reason.trim() || !verificationForm.topics.trim()) {
+    if (
+      !verificationForm.reason.trim() ||
+      !verificationForm.topics.trim() ||
+      !verificationForm.email.trim() ||
+      !verificationForm.phone.trim()
+    ) {
       toast.error("Please complete the verification form");
       return;
     }
@@ -82,7 +139,12 @@ export default function BlogWorkspace({ session }) {
       const response = await fetch("/api/blogs/verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(verificationForm),
+        body: JSON.stringify({
+          reason: verificationForm.reason,
+          topics: verificationForm.topics,
+          email: verificationForm.email,
+          phone: verificationForm.phone,
+        }),
       });
 
       if (!response.ok) throw new Error("Verification request failed");
@@ -94,6 +156,106 @@ export default function BlogWorkspace({ session }) {
       console.error(error);
     } finally {
       setSubmittingVerification(false);
+    }
+  };
+
+  const sendVerificationEmail = async () => {
+    if (!firebaseAuth.currentUser) {
+      toast.error("Sign in with email and password to verify your email.");
+      return;
+    }
+
+    try {
+      setSendingEmailVerification(true);
+      await sendEmailVerification(firebaseAuth.currentUser);
+      toast.success("Verification email sent.");
+    } catch (error) {
+      toast.error(error.message || "Failed to send email verification.");
+    } finally {
+      setSendingEmailVerification(false);
+    }
+  };
+
+  const sendPhoneVerification = async () => {
+    if (!firebaseAuth.currentUser) {
+      toast.error("Sign in with email and password to verify your phone.");
+      return;
+    }
+
+    if (!verificationForm.phone.trim()) {
+      toast.error("Add your phone number first.");
+      return;
+    }
+
+    try {
+      setSendingPhoneVerification(true);
+      phoneConfirmationRef.current = await linkWithPhoneNumber(
+        firebaseAuth.currentUser,
+        verificationForm.phone.trim(),
+        recaptchaRef.current,
+      );
+      toast.success("Verification code sent to your phone.");
+    } catch (error) {
+      toast.error(error.message || "Failed to send phone verification.");
+    } finally {
+      setSendingPhoneVerification(false);
+    }
+  };
+
+  const confirmPhoneVerification = async () => {
+    if (!phoneConfirmationRef.current || !verificationForm.code.trim()) {
+      toast.error("Enter the verification code sent to your phone.");
+      return;
+    }
+
+    try {
+      setConfirmingPhoneVerification(true);
+      await phoneConfirmationRef.current.confirm(verificationForm.code.trim());
+      toast.success("Phone number verified.");
+    } catch (error) {
+      toast.error(error.message || "Invalid verification code.");
+    } finally {
+      setConfirmingPhoneVerification(false);
+    }
+  };
+
+  const completeVerification = async () => {
+    try {
+      if (!firebaseAuth.currentUser) {
+        toast.error("Sign in with email and password to complete verification.");
+        return;
+      }
+
+      await reload(firebaseAuth.currentUser);
+      const response = await fetch("/api/blogs/complete-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emailVerified: firebaseAuth.currentUser.emailVerified,
+          phoneVerified: Boolean(firebaseAuth.currentUser.phoneNumber),
+          email: verificationForm.email,
+          phone: verificationForm.phone,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Verification is not complete yet");
+      }
+
+      const achievements = await awardUserProgress(session.user.profileId, {
+        blogVerified: true,
+      });
+      achievements.forEach((achievement) =>
+        toast.success(`Celebration: ${achievement.title}`),
+      );
+      await update({
+        verifiedForBlogging: true,
+      });
+      toast.success("Blog verification completed.");
+      window.location.reload();
+    } catch (error) {
+      toast.error(error.message || "Failed to complete verification.");
     }
   };
 
@@ -217,9 +379,115 @@ export default function BlogWorkspace({ session }) {
               <p className="text-sm text-text-muted mt-1">
                 Status: {profile?.blogVerificationStatus || "unverified"}
               </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                    emailVerified
+                      ? "bg-emerald-500/15 text-emerald-500"
+                      : "bg-background text-text-muted border border-border"
+                  }`}
+                >
+                  {emailVerified ? "Email verified" : "Email pending"}
+                </span>
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                    phoneVerified
+                      ? "bg-emerald-500/15 text-emerald-500"
+                      : "bg-background text-text-muted border border-border"
+                  }`}
+                >
+                  {phoneVerified ? "Phone verified" : "Phone pending"}
+                </span>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+                  Verification email
+                </label>
+                <input
+                  type="email"
+                  value={verificationForm.email}
+                  onChange={(event) =>
+                    setVerificationForm((current) => ({
+                      ...current,
+                      email: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={sendVerificationEmail}
+                    disabled={sendingEmailVerification || emailVerified}
+                    className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground disabled:opacity-60"
+                  >
+                    {emailVerified
+                      ? "Email verified"
+                      : sendingEmailVerification
+                        ? "Sending..."
+                        : "Send email verification"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+                  Phone number
+                </label>
+                <input
+                  type="tel"
+                  value={verificationForm.phone}
+                  onChange={(event) =>
+                    setVerificationForm((current) => ({
+                      ...current,
+                      phone: event.target.value,
+                    }))
+                  }
+                  placeholder="+234..."
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={sendPhoneVerification}
+                    disabled={sendingPhoneVerification || phoneVerified}
+                    className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground disabled:opacity-60"
+                  >
+                    {phoneVerified
+                      ? "Phone verified"
+                      : sendingPhoneVerification
+                        ? "Sending code..."
+                        : "Send phone code"}
+                  </button>
+                  <input
+                    type="text"
+                    value={verificationForm.code}
+                    onChange={(event) =>
+                      setVerificationForm((current) => ({
+                        ...current,
+                        code: event.target.value,
+                      }))
+                    }
+                    placeholder="OTP code"
+                    className="min-w-[140px] flex-1 rounded-full border border-border bg-background px-4 py-2 text-xs outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={confirmPhoneVerification}
+                    disabled={confirmingPhoneVerification || phoneVerified}
+                    className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground disabled:opacity-60"
+                  >
+                    {confirmingPhoneVerification
+                      ? "Verifying..."
+                      : "Verify code"}
+                  </button>
+                </div>
+                <div id="blog-phone-recaptcha" />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
                   Why you want to blog
@@ -255,7 +523,7 @@ export default function BlogWorkspace({ session }) {
             </div>
 
             <div className="rounded-xl border border-border bg-background px-4 py-3 text-xs text-text-muted leading-relaxed">
-              By requesting blog access, you confirm that your posts will respect privacy, avoid doxxing or secret leakage, use attributed sources for news, and stay focused on technology-related topics.
+              By requesting blog access, you confirm that your posts will respect privacy, avoid doxxing or secret leakage, use attributed sources for news, and stay focused on technology-related topics. Blog access unlocks automatically after both your email and phone are verified.
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -280,6 +548,14 @@ export default function BlogWorkspace({ session }) {
               >
                 Review privacy
               </Link>
+              <button
+                type="button"
+                onClick={completeVerification}
+                disabled={!emailVerified || !phoneVerified}
+                className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
+              >
+                Complete verification
+              </button>
             </div>
           </section>
         )}

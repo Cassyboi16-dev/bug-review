@@ -26,6 +26,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatLanguageLabel } from "@/Components/CodeSnippetBlock";
 import GitHubBadge from "@/Components/GitHubBadge";
+import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
 
 import {
@@ -234,6 +235,7 @@ function CommentNode({
             username={comment.authorGithubUsername}
             compact
           />
+          <BloggerBadge visible={comment.authorIsBlogger} compact />
           <span className="text-[11px] text-text-muted">
             · {getRelativeTime(new Date(comment.createdAt))}
           </span>
@@ -336,8 +338,10 @@ export default function Explore({ session }) {
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
   const userProfileId = session?.user?.profileId || "";
+  const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
   const [posts, setPosts] = useState([]);
+  const [userProfiles, setUserProfiles] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [topicFilter, setTopicFilter] = useState("all");
   const [sortMode, setSortMode] = useState("recent");
@@ -368,6 +372,13 @@ export default function Explore({ session }) {
     const unsub = onSnapshot(collection(db, "bugPosts"), (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setPosts(data);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
+      setUserProfiles(snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() })));
     });
     return () => unsub();
   }, []);
@@ -437,6 +448,29 @@ export default function Explore({ session }) {
       ? fromPosts
       : ["react", "bug", "performance", "security", "ui/ux"];
   }, [posts]);
+
+  const leaderboard = useMemo(() => {
+    return [...userProfiles]
+      .map((profile) => {
+        const stats = profile.stats || {};
+        const score =
+          (stats.postsCount || 0) * 3 +
+          (stats.solutionsOfferedCount || 0) * 4 +
+          (stats.solvedPostsCount || 0) * 5 +
+          (stats.blogPostsCount || 0) * 3;
+
+        return {
+          id: profile.id,
+          username: profile.username || profile.name || "Anonymous",
+          score,
+          bloggerBadge: Boolean(profile.bloggerBadge),
+          achievements: profile.achievements || [],
+        };
+      })
+      .filter((profile) => profile.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [userProfiles]);
 
   // ── Filtered + sorted posts ───────────────────
   const filteredPosts = useMemo(() => {
@@ -612,6 +646,7 @@ export default function Explore({ session }) {
       authorImg: userImg,
       authorGithubUrl: userGithubUrl,
       authorGithubUsername: userGithubUsername,
+      authorIsBlogger: userIsBlogger,
       text,
       createdAt: Date.now(),
     };
@@ -641,6 +676,7 @@ export default function Explore({ session }) {
       authorImg: userImg,
       authorGithubUrl: userGithubUrl,
       authorGithubUsername: userGithubUsername,
+      authorIsBlogger: userIsBlogger,
       text,
       createdAt: Date.now(),
     };
@@ -776,6 +812,41 @@ export default function Explore({ session }) {
             {showSavedOnly ? "Showing saved" : "Saved posts"}
           </motion.button>
 
+          <div className="bg-surface border border-border rounded-2xl p-4 space-y-3">
+            <h3 className="text-sm font-bold text-foreground">
+              Leaderboard
+            </h3>
+            {leaderboard.length > 0 ? (
+              <div className="space-y-2">
+                {leaderboard.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 rounded-xl bg-background px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {index + 1}. {entry.username}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <BloggerBadge visible={entry.bloggerBadge} compact />
+                        <span className="text-[11px] text-text-muted">
+                          {entry.achievements.length} achievements
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-primary-500">
+                      {entry.score} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-text-muted">
+                Leaderboard will populate as the community earns achievements.
+              </p>
+            )}
+          </div>
+
           {/* Trending topics */}
           <div className="bg-surface border border-border rounded-2xl p-4 space-y-2.5">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -909,6 +980,7 @@ export default function Explore({ session }) {
                                   username={post.authorGithubUsername}
                                   compact
                                 />
+                                <BloggerBadge visible={post.authorIsBlogger} compact />
                                 <span className="text-xs text-text-muted">
                                   {getCountryFlag(post.country)} {post.country}{" "}
                                   · {relativeTime}
