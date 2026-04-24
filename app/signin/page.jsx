@@ -71,10 +71,6 @@ export default function SignIn() {
           <h1 className="text-4xl font-black text-primary-500">Welcome Back</h1>
           <p className="text-text-muted mt-2 text-sm">Sign in to continue</p>
         </div>
-<<<<<<< HEAD
-
-=======
->>>>>>> 6c77fc5c7e20396662385f00190fb8b9eafc96c2
         {/* ================= CONSENT ================= */}
         <div className="flex gap-3 text-xs bg-surface border border-border p-3 rounded-xl">
           <input
