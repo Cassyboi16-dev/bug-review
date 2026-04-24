@@ -11,11 +11,14 @@ import { db } from "@/config/firebase.config";
 import { IoMdGlobe } from "react-icons/io";
 import { FiArrowRight } from "react-icons/fi";
 import { CodeSnippetEditor } from "@/Components/CodeSnippetBlock";
+import { awardUserProgress } from "@/lib/client/gamification";
 
 export default function UploadClient({ session }) {
   const author = session?.user?.username || session?.user?.name || "Anonymous";
   const authorId = session?.user?.id || "";
   const authorImg = session?.user?.image || "/default-avatar.png";
+  const authorGithubUrl = session?.user?.githubProfileUrl || "";
+  const authorGithubUsername = session?.user?.githubUsername || "";
 
   const datestamp = new Date().toLocaleDateString("en-US", {
     month: "long",
@@ -27,6 +30,7 @@ export default function UploadClient({ session }) {
   const [country, setCountry] = useState("");
   const [locationLoading, setLocationLoading] = useState(true);
   const [guidelinesOpen, setGuidelinesOpen] = useState(false);
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
 
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
@@ -140,11 +144,15 @@ export default function UploadClient({ session }) {
           onSubmit={async (values, { resetForm }) => {
             try {
               setStatus("loading");
+              setUnlockedAchievements([]);
               await addDoc(collection(db, "bugPosts"), {
                 ...values,
                 author,
                 authorId,
+                authorEmail: session?.user?.email || "",
                 authorImg,
+                authorGithubUrl,
+                authorGithubUsername,
                 datestamp,
                 timestamp: new Date().toLocaleTimeString(),
                 createdAt: serverTimestamp(),
@@ -157,6 +165,11 @@ export default function UploadClient({ session }) {
                 solvedAt: null,
                 solutionText: "",
               });
+              const unlocked = await awardUserProgress(
+                session?.user?.profileId,
+                { postsCount: 1 },
+              );
+              setUnlockedAchievements(unlocked);
               setStatus("success");
               successAudioRef.current?.play();
               resetForm();
@@ -445,7 +458,11 @@ export default function UploadClient({ session }) {
                   <GiCheckMark className="text-emerald-400 text-xl" />
                 </div>
                 <p className="text-sm font-semibold text-foreground">Posted successfully</p>
-                <p className="text-xs text-text-muted">Your report is now live on the feed.</p>
+                <p className="text-xs text-text-muted">
+                  {unlockedAchievements[0]
+                    ? `Achievement unlocked: ${unlockedAchievements[0].title}`
+                    : "Your report is now live on the feed."}
+                </p>
               </motion.div>
             )}
 

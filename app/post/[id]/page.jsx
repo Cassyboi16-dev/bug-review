@@ -33,6 +33,8 @@ import {
   CodeSnippetPreview,
   RichTextWithCode,
 } from "@/Components/CodeSnippetBlock";
+import GitHubBadge from "@/Components/GitHubBadge";
+import { awardUserProgress } from "@/lib/client/gamification";
 
 // ─── Country flag ──────────────────────────────
 const COUNTRY_CODES = {
@@ -128,6 +130,11 @@ function CommentNode({ comment, allComments, depth, onAddReply }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-foreground">{comment.author}</span>
+              <GitHubBadge
+                href={comment.authorGithubUrl}
+                username={comment.authorGithubUsername}
+                compact
+              />
               <span className="text-[10px] text-text-muted">{getRelativeTime(comment.createdAt)}</span>
             </div>
             <p className="text-sm text-foreground mt-1 break-words whitespace-pre-wrap leading-relaxed">
@@ -226,9 +233,12 @@ export default function PostPage() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const userId   = session?.user?.email || session?.user?.id || "anonymous";
+  const userId   = session?.user?.id || session?.user?.email || "anonymous";
   const userName = session?.user?.name  || session?.user?.username || "Anonymous";
   const userImg  = session?.user?.image || "";
+  const userGithubUrl = session?.user?.githubProfileUrl || "";
+  const userGithubUsername = session?.user?.githubUsername || "";
+  const userProfileId = session?.user?.profileId || "";
 
   const [post, setPost] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -302,10 +312,15 @@ export default function PostPage() {
         authorId: userId,
         author: userName,
         authorImg: userImg,
+        authorGithubUrl: userGithubUrl,
+        authorGithubUsername: userGithubUsername,
         text,
         createdAt: Date.now(),
       }),
     });
+    if (post.authorId && post.authorId !== userId) {
+      await awardUserProgress(userProfileId, { solutionsOfferedCount: 1 });
+    }
   };
 
   const addReply = async (parentId, text) => {
@@ -316,10 +331,15 @@ export default function PostPage() {
         authorId: userId,
         author: userName,
         authorImg: userImg,
+        authorGithubUrl: userGithubUrl,
+        authorGithubUsername: userGithubUsername,
         text,
         createdAt: Date.now(),
       }),
     });
+    if (post.authorId && post.authorId !== userId) {
+      await awardUserProgress(userProfileId, { solutionsOfferedCount: 1 });
+    }
   };
 
   return (
@@ -379,6 +399,13 @@ export default function PostPage() {
                 <p className="text-sm font-semibold text-foreground leading-tight truncate">
                   {post.author || "Anonymous"}
                 </p>
+                <div className="mt-1">
+                  <GitHubBadge
+                    href={post.authorGithubUrl}
+                    username={post.authorGithubUsername}
+                    compact
+                  />
+                </div>
                 <div className="flex items-center gap-2 text-[11px] text-text-muted mt-0.5 flex-wrap">
                   {post.country && (
                     <span className="flex items-center gap-1">
