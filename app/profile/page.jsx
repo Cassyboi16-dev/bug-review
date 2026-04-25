@@ -2,25 +2,26 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { doc, onSnapshot } from "firebase/firestore";
 import toast from "react-hot-toast";
+import { FiArrowRight, FiAward, FiGithub, FiShield, FiUser } from "react-icons/fi";
 import { db } from "@/config/firebase.config";
 import GitHubBadge from "@/Components/GitHubBadge";
 import { getAchievementDetails } from "@/lib/achievements";
 
-export default function Profile() {
+export default function ProfilePage() {
   const { data: session, update } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [unlinkingGithub, setUnlinkingGithub] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [username, setUsername] = useState(session?.user?.username || "");
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (session === undefined) return;
-    if (!session) router.push("/signin");
+    if (!session) router.replace("/signin");
   }, [router, session]);
 
   useEffect(() => {
@@ -30,9 +31,9 @@ export default function Profile() {
       doc(db, "users", session.user.profileId),
       (snapshot) => {
         if (!snapshot.exists()) return;
-        const data = { id: snapshot.id, ...snapshot.data() };
-        setProfile(data);
-        setUsername(data.username || session.user?.username || "");
+        const nextProfile = { id: snapshot.id, ...snapshot.data() };
+        setProfile(nextProfile);
+        setUsername(nextProfile.username || session.user.username || "");
       },
     );
 
@@ -60,13 +61,14 @@ export default function Profile() {
         body: JSON.stringify({ username }),
       });
 
-      if (!response.ok) throw new Error("Failed to update username");
+      if (!response.ok) {
+        throw new Error("Failed to update username");
+      }
 
       await update({ username });
-      toast.success("Username updated successfully");
+      toast.success("Username updated");
     } catch (error) {
-      toast.error("Failed to update username");
-      console.error(error);
+      toast.error(error.message || "Failed to update username");
     } finally {
       setLoading(false);
     }
@@ -79,183 +81,199 @@ export default function Profile() {
         method: "POST",
       });
 
-      if (!response.ok) throw new Error("Failed to unlink GitHub");
+      if (!response.ok) {
+        throw new Error("Failed to unlink GitHub");
+      }
 
       await update({ githubProfileUrl: "" });
       toast.success("GitHub badge removed");
     } catch (error) {
-      toast.error("Failed to unlink GitHub");
-      console.error(error);
+      toast.error(error.message || "Failed to unlink GitHub");
     } finally {
       setUnlinkingGithub(false);
     }
   };
 
   return (
-    <main className="min-h-dvh bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617] text-white flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl flex flex-col gap-10">
-        <h1 className="text-center font-extrabold text-4xl md:text-6xl uppercase text-emerald-400 tracking-widest">
-          {"<Profile />"}
-        </h1>
-
-        <section className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 flex flex-col items-center gap-4 shadow-lg">
-            <img
-              src={session?.user?.image || "/default-avatar.png"}
-              alt={session?.user?.name || "User"}
-              className="w-24 h-24 rounded-full border-2 border-emerald-400 shadow-md"
-            />
-
-            <div className="text-center space-y-1">
-              <p className="text-lg font-semibold text-emerald-300">
-                {profile?.username || session?.user?.username || session?.user?.name}
-              </p>
-              <p className="text-sm text-gray-400">{session?.user?.email}</p>
-              <p className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded mt-2">
-                ID: {session?.user?.profileId || session?.user?.id}
-              </p>
-            </div>
-
-            <GitHubBadge
-              href={profile?.githubProfileUrl || session?.user?.githubProfileUrl}
-              username={profile?.githubUsername || session?.user?.githubUsername}
-            />
-
-            {profile?.githubProfileUrl && (
-              <button
-                type="button"
-                onClick={handleUnlinkGithub}
-                disabled={unlinkingGithub}
-                className="text-xs text-red-300 hover:text-red-200"
-              >
-                {unlinkingGithub ? "Unlinking..." : "Unlink GitHub"}
-              </button>
-            )}
-
-            <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
-              <p className="text-sm font-semibold text-emerald-300">
-                Milestones
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
-                <span>Posts: {profile?.stats?.postsCount || 0}</span>
-                <span>Helpful fixes: {profile?.stats?.solutionsOfferedCount || 0}</span>
-                <span>Resolved posts: {profile?.stats?.solvedPostsCount || 0}</span>
-                <span>Blog posts: {profile?.stats?.blogPostsCount || 0}</span>
-              </div>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {achievements.length > 0 ? (
-                  achievements.map((achievement) => (
-                    <span
-                      key={achievement.key}
-                      className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-[11px] text-emerald-200"
-                    >
-                      {achievement.title}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400">
-                    Your first milestone will appear here after your first contribution.
-                  </p>
-                )}
+    <main className="page-shell space-y-8">
+      <section className="hero-shell px-6 py-8 md:px-8 md:py-10">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-4">
+            <span className="eyebrow">
+              <FiUser className="h-3.5 w-3.5" />
+              Profile
+            </span>
+            <div className="flex items-center gap-4">
+              <img
+                src={session.user?.image || "/default-avatar.png"}
+                alt={session.user?.name || "User"}
+                className="h-16 w-16 rounded-3xl border border-border object-cover"
+              />
+              <div className="space-y-1">
+                <h1 className="text-3xl font-black tracking-tight text-foreground">
+                  {profile?.username || session.user?.username || session.user?.name}
+                </h1>
+                <p className="text-sm text-text-muted">{session.user?.email}</p>
               </div>
             </div>
-
-            <div className="w-full rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
-              <p className="text-sm font-semibold text-emerald-300">
-                Blogging Access
-              </p>
-              <p className="text-xs text-slate-300">
-                Status: {profile?.verifiedForBlogging ? "Verified" : profile?.blogVerificationStatus || "unverified"}
-              </p>
-              <div className="flex flex-wrap gap-3 pt-1">
-                {!profile?.verifiedForBlogging && (
-                  <Link
-                    href="/blog"
-                    className="inline-flex rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-black"
-                  >
-                    Request verification
-                  </Link>
-                )}
-                {profile?.verifiedForBlogging && (
-                  <Link
-                    href="/blog"
-                    className="inline-flex rounded-full bg-emerald-500 px-4 py-2 text-xs font-semibold text-black"
-                  >
-                    Write a blog post
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            <form className="w-full mt-2">
-              <button
-                onClick={async () => {
-                  await signOut({ callbackUrl: "/signin" });
-                }}
-                type="button"
-                className="w-full py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition duration-300"
-              >
-                Sign Out
-              </button>
-            </form>
+            <p className="max-w-2xl text-sm leading-7 text-text-muted">
+              Manage your identity, author profile, and contribution milestones from
+              one workspace.
+            </p>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-lg flex flex-col gap-6">
-            <h2 className="text-xl font-semibold text-emerald-300">
-              Update Profile
-            </h2>
-
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-400">Name</label>
-                <input
-                  type="text"
-                  value={session.user?.name || ""}
-                  disabled
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition opacity-50"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-400">Email</label>
-                <input
-                  type="email"
-                  value={session.user?.email || ""}
-                  disabled
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition opacity-50"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-400">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-400 transition"
-                />
-              </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="metric-card">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                Bug posts
+              </p>
+              <p className="mt-3 text-3xl font-black">{profile?.stats?.postsCount || 0}</p>
             </div>
-
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-xs text-slate-300 leading-relaxed">
-              Provider badges and blogging access follow the profile records stored for your account. Blog verification helps us keep technical articles, news, and external references trustworthy for readers.
+            <div className="metric-card">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                Solutions
+              </p>
+              <p className="mt-3 text-3xl font-black">
+                {profile?.stats?.solutionsOfferedCount || 0}
+              </p>
             </div>
+            <div className="metric-card">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                Blog posts
+              </p>
+              <p className="mt-3 text-3xl font-black">
+                {profile?.stats?.blogPostsCount || 0}
+              </p>
+            </div>
+            <div className="metric-card">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+                Blogging
+              </p>
+              <p className="mt-3 text-lg font-semibold">
+                {profile?.verifiedForBlogging ? "Verified" : "Not active"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
+      <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="section-shell space-y-5 px-6 py-6">
+          <div className="flex items-center gap-2">
+            <FiGithub className="h-4 w-4 text-primary-500" />
+            <h2 className="text-xl font-semibold text-foreground">Identity</h2>
+          </div>
+
+          <GitHubBadge
+            href={profile?.githubProfileUrl || session.user?.githubProfileUrl}
+            username={profile?.githubUsername || session.user?.githubUsername}
+          />
+
+          {profile?.githubProfileUrl && (
             <button
-              onClick={handleUpdateUsername}
-              disabled={loading}
-              className="mt-auto py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition duration-300 disabled:opacity-50"
+              type="button"
+              onClick={handleUnlinkGithub}
+              disabled={unlinkingGithub}
+              className="btn-outline w-full"
             >
-              {loading ? "Saving..." : "Save Username"}
+              {unlinkingGithub ? "Unlinking..." : "Unlink GitHub"}
             </button>
-          </div>
-        </section>
+          )}
 
-        <p className="text-center text-xs text-gray-500 font-mono">
-          {"User Signed In: "}{" "}
-          {profile?.username || session.user?.username || session.user?.name || "Unknown User"}
-        </p>
-      </div>
+          <div className="panel-shell space-y-3 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              Blogging access
+            </p>
+            <p className="text-sm leading-7 text-text-muted">
+              {profile?.verifiedForBlogging
+                ? "Your account can publish articles and shows the blogger badge."
+                : "Complete publisher setup to unlock technical articles and blogger badges."}
+            </p>
+            <Link href="/blog" className="btn-primary w-full">
+              {profile?.verifiedForBlogging ? "Open blog workspace" : "Unlock blogging"}
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/signin" })}
+            className="btn-outline w-full text-red-400"
+          >
+            Sign out
+          </button>
+        </div>
+
+        <div className="section-shell space-y-6 px-6 py-6">
+          <div className="flex items-center gap-2">
+            <FiShield className="h-4 w-4 text-primary-500" />
+            <h2 className="text-xl font-semibold text-foreground">Account settings</h2>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2 text-sm text-foreground">
+              Name
+              <input
+                type="text"
+                value={session.user?.name || ""}
+                disabled
+                className="input opacity-70"
+              />
+            </label>
+            <label className="grid gap-2 text-sm text-foreground">
+              Email
+              <input
+                type="email"
+                value={session.user?.email || ""}
+                disabled
+                className="input opacity-70"
+              />
+            </label>
+          </div>
+
+          <label className="grid gap-2 text-sm text-foreground">
+            Username
+            <input
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              className="input"
+            />
+          </label>
+
+          <div className="panel-shell space-y-3 p-5">
+            <div className="flex items-center gap-2">
+              <FiAward className="h-4 w-4 text-primary-500" />
+              <p className="text-sm font-semibold text-foreground">Achievements</p>
+            </div>
+            {achievements.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {achievements.map((achievement) => (
+                  <span
+                    key={achievement.key}
+                    className="rounded-full border border-primary-500/20 bg-primary-500/8 px-3 py-1 text-xs font-medium text-primary-500"
+                  >
+                    {achievement.title}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm leading-7 text-text-muted">
+                Your first milestone appears as soon as you post, help, or publish.
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleUpdateUsername}
+            disabled={loading}
+            className="btn-primary"
+          >
+            {loading ? "Saving..." : "Save username"}
+            <FiArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </section>
     </main>
   );
 }

@@ -9,21 +9,23 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const emailVerified = Boolean(body.emailVerified);
-  const phoneVerified = Boolean(body.phoneVerified);
+  const emailVerified =
+    body.emailVerified === undefined ? true : Boolean(body.emailVerified);
+  const phoneVerified =
+    body.phoneVerified === undefined ? true : Boolean(body.phoneVerified);
   const verificationEmail = String(body.email || session.user.email || "").trim();
   const verificationPhone = String(body.phone || "").trim();
 
-  if (!emailVerified || !phoneVerified) {
+  if (!emailVerified) {
     return NextResponse.json(
-      { error: "Email and phone must both be verified" },
+      { error: "Email must be verified" },
       { status: 400 },
     );
   }
 
   const profile = await updateUserProfile(session.user.email, {
     emailVerifiedForBlogging: true,
-    phoneVerifiedForBlogging: true,
+    phoneVerifiedForBlogging: phoneVerified,
     verifiedForBlogging: true,
     bloggerBadge: true,
     blogVerificationStatus: "verified",

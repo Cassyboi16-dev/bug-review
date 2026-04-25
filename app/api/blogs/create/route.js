@@ -11,6 +11,13 @@ function slugify(value) {
     .slice(0, 80);
 }
 
+function stripHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export async function POST(request) {
   const session = await auth();
   if (!session?.user?.email || !session?.user?.profileId) {
@@ -30,9 +37,12 @@ export async function POST(request) {
   const summary = String(body.summary || "").trim();
   const content = String(body.content || "").trim();
   const category = String(body.category || "").trim();
-  const tags = Array.isArray(body.tags) ? body.tags : [];
+  const tags = Array.isArray(body.tags)
+    ? Array.from(new Set(body.tags.map((tag) => String(tag).trim()).filter(Boolean)))
+    : [];
+  const contentText = stripHtml(content);
 
-  if (!title || !summary || !content || !category) {
+  if (!title || !summary || !contentText || !category) {
     return NextResponse.json(
       { error: "Title, summary, category, and content are required" },
       { status: 400 },
@@ -41,7 +51,7 @@ export async function POST(request) {
 
   const readTimeMinutes = Math.max(
     1,
-    Math.ceil(content.split(/\s+/).filter(Boolean).length / 200),
+    Math.ceil(contentText.split(/\s+/).filter(Boolean).length / 200),
   );
 
   const createdAt = new Date().toISOString();

@@ -48,6 +48,11 @@ export default function SignIn() {
       return;
     }
 
+    if (mode === "register" && password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+
     try {
       setSubmittingEmailAuth(true);
       await setPersistence(firebaseAuth, browserLocalPersistence);
@@ -123,10 +128,11 @@ export default function SignIn() {
   };
 
   return (
-    <main className="bg-background text-foreground min-h-dvh flex justify-center items-center px-4">
+    <main className="page-shell flex min-h-[calc(100dvh-8rem)] items-center justify-center">
       <Toaster position="bottom-center" />
 
-      <section className="w-full max-w-md flex flex-col gap-6 rounded-3xl border border-border bg-surface p-6 shadow-sm">
+      <section className="hero-shell w-full max-w-md p-6">
+        <div className="flex flex-col gap-6">
         <div className="text-center">
           <h1 className="text-4xl font-black text-primary-500">Welcome Back</h1>
           <p className="text-text-muted mt-2 text-sm">
@@ -181,7 +187,7 @@ export default function SignIn() {
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Your name"
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none"
+              className="input"
             />
           )}
 
@@ -190,7 +196,7 @@ export default function SignIn() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="Email address"
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none"
+            className="input"
           />
 
           <div className="relative">
@@ -199,7 +205,7 @@ export default function SignIn() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Password"
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-12 text-sm text-foreground outline-none"
+              className="input pr-12"
             />
             <button
               type="button"
@@ -215,7 +221,7 @@ export default function SignIn() {
             type="button"
             onClick={handleEmailAuth}
             disabled={!consent || submittingEmailAuth}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
+            className="btn-primary w-full disabled:opacity-60"
           >
             {submittingEmailAuth
               ? mode === "register"
@@ -240,7 +246,7 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("google")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
+            className="btn-secondary w-full disabled:opacity-60"
           >
             <FcGoogle />
             {loadingProvider === "google"
@@ -251,7 +257,7 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("github")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
+            className="btn-secondary w-full disabled:opacity-60"
           >
             <FaGithub />
             {loadingProvider === "github"
@@ -262,13 +268,14 @@ export default function SignIn() {
           <button
             onClick={() => handleOAuth("discord")}
             disabled={!consent || loadingProvider}
-            className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-background text-foreground disabled:opacity-60"
+            className="btn-secondary w-full disabled:opacity-60"
           >
             <FaDiscord />
             {loadingProvider === "discord"
               ? "Connecting..."
               : "Continue with Discord"}
           </button>
+        </div>
         </div>
       </section>
     </main>

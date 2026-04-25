@@ -14,9 +14,9 @@ export async function POST(request) {
   const verificationEmail = String(body.email || session.user.email || "").trim();
   const verificationPhone = String(body.phone || "").trim();
 
-  if (!reason || !topics || !verificationEmail || !verificationPhone) {
+  if (!reason || !topics || !verificationEmail) {
     return NextResponse.json(
-      { error: "Reason, topics, email, and phone are required" },
+      { error: "Reason, topics, and email are required" },
       { status: 400 },
     );
   }
@@ -29,16 +29,19 @@ export async function POST(request) {
     username: session.user.username || session.user.name || "Anonymous",
     reason,
     topics,
-    status: "pending",
+    status: "approved",
     createdAt: new Date().toISOString(),
   });
 
-  await updateUserProfile(session.user.email, {
-    blogVerificationStatus: "pending",
+  const profile = await updateUserProfile(session.user.email, {
+    blogVerificationStatus: "verified",
     blogVerificationRequestedAt: new Date().toISOString(),
+    verifiedForBlogging: true,
+    bloggerBadge: true,
+    emailVerifiedForBlogging: true,
     verificationEmail,
     verificationPhone,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, profile });
 }

@@ -24,7 +24,11 @@ import { FiArrowRight } from "react-icons/fi";
 import { useEffect, useState, useMemo, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatLanguageLabel } from "@/Components/CodeSnippetBlock";
+import {
+  CodeSnippetEditor,
+  CodeSnippetPreview,
+  formatLanguageLabel,
+} from "@/Components/CodeSnippetBlock";
 import GitHubBadge from "@/Components/GitHubBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
@@ -353,6 +357,9 @@ export default function Explore({ session }) {
     open: false,
     post: null,
     text: "",
+    codeSnippet: "",
+    codeLanguage: "",
+    allowCopy: true,
   });
   const [solvingPostId, setSolvingPostId] = useState(null);
 
@@ -484,7 +491,10 @@ export default function Explore({ session }) {
           p.title?.toLowerCase().includes(q) ||
           p.description?.toLowerCase().includes(q) ||
           p.codeLanguage?.toLowerCase().includes(q) ||
+          p.codeSnippet?.toLowerCase().includes(q) ||
           p.solutionText?.toLowerCase().includes(q) ||
+          p.solutionCodeLanguage?.toLowerCase().includes(q) ||
+          p.solutionCodeSnippet?.toLowerCase().includes(q) ||
           p.author?.toLowerCase().includes(q) ||
           (p.tags || []).some((t) => t.toLowerCase().includes(q)) ||
           (p.topics || []).some((t) => t.toLowerCase().includes(q)) ||
@@ -705,12 +715,23 @@ export default function Explore({ session }) {
       open: true,
       post,
       text: post.solutionText || "",
+      codeSnippet: post.solutionCodeSnippet || "",
+      codeLanguage: post.solutionCodeLanguage || "",
+      allowCopy:
+        post.solutionAllowCopy === undefined ? true : Boolean(post.solutionAllowCopy),
     });
   };
 
   const closeSolveModal = () => {
     if (solvingPostId) return;
-    setSolveModal({ open: false, post: null, text: "" });
+    setSolveModal({
+      open: false,
+      post: null,
+      text: "",
+      codeSnippet: "",
+      codeLanguage: "",
+      allowCopy: true,
+    });
   };
 
   const markPostSolved = async () => {
@@ -723,13 +744,23 @@ export default function Explore({ session }) {
         solved: true,
         solvedAt: Date.now(),
         solutionText: solveModal.text.trim(),
+        solutionCodeSnippet: solveModal.codeSnippet.trim(),
+        solutionCodeLanguage: solveModal.codeLanguage.trim(),
+        solutionAllowCopy: Boolean(solveModal.allowCopy),
       });
       const achievements = await awardUserProgress(userProfileId, {
         solvedPostsCount: 1,
       });
       showAchievementToasts(achievements);
       toast.success("Marked as solved");
-      setSolveModal({ open: false, post: null, text: "" });
+      setSolveModal({
+        open: false,
+        post: null,
+        text: "",
+        codeSnippet: "",
+        codeLanguage: "",
+        allowCopy: true,
+      });
     } catch {
       toast.error("Failed to mark post as solved");
     } finally {
@@ -1034,6 +1065,40 @@ export default function Explore({ session }) {
                               </span>
                             </Link>
 
+                            {post.solved &&
+                              (post.solutionText?.trim() ||
+                                post.solutionCodeSnippet?.trim()) && (
+                                <div className="mt-3 space-y-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-500">
+                                      Shared solution
+                                    </p>
+                                    {post.solutionCodeSnippet?.trim() && (
+                                      <span className="text-[11px] text-text-muted">
+                                        {formatLanguageLabel(post.solutionCodeLanguage)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {post.solutionText?.trim() && (
+                                    <p className="text-sm leading-relaxed text-foreground/85 line-clamp-3">
+                                      {post.solutionText}
+                                    </p>
+                                  )}
+                                  {post.solutionCodeSnippet?.trim() && (
+                                    <CodeSnippetPreview
+                                      code={post.solutionCodeSnippet}
+                                      language={post.solutionCodeLanguage}
+                                      allowCopy={
+                                        post.solutionAllowCopy === undefined
+                                          ? true
+                                          : Boolean(post.solutionAllowCopy)
+                                      }
+                                      compact
+                                    />
+                                  )}
+                                </div>
+                              )}
+
                             {(isOwner || post.solved) && (
                               <div className="mt-3">
                                 {isOwner && !post.solved && (
@@ -1322,10 +1387,8 @@ export default function Explore({ session }) {
         </DialogTitle>
         <DialogContent sx={{ pt: "8px !important" }}>
           <Typography variant="body2" sx={{ color: "var(--text-muted)", mb: 2 }}>
-            Share the fix that worked for you. If you want, you can include a
-            code block using triple backticks and the language, like
-            <br />
-            <code>```javascript</code>
+            Share the fix that worked for you, then add the exact code snippet if
+            readers should be able to inspect it right from the feed.
           </Typography>
           <textarea
             value={solveModal.text}
@@ -1336,9 +1399,59 @@ export default function Explore({ session }) {
               }))
             }
             rows={8}
-            placeholder="Tell people what solved the issue for you. Add a code snippet here too if it helps."
+            placeholder="Tell people what solved the issue for you."
             className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-text-muted outline-none"
           />
+          <div className="mt-4 space-y-4">
+            <input
+              type="text"
+              value={solveModal.codeLanguage}
+              onChange={(event) =>
+                setSolveModal((current) => ({
+                  ...current,
+                  codeLanguage: event.target.value,
+                }))
+              }
+              placeholder="Code language (JavaScript, Python, TypeScript...)"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder-text-muted outline-none"
+            />
+
+            <CodeSnippetEditor
+              value={solveModal.codeSnippet}
+              onChange={(value) =>
+                setSolveModal((current) => ({
+                  ...current,
+                  codeSnippet: value,
+                }))
+              }
+              language={solveModal.codeLanguage}
+              placeholder="Paste the working fix, migration snippet, command, or config change."
+              rows={10}
+            />
+
+            <label className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={Boolean(solveModal.allowCopy)}
+                onChange={(event) =>
+                  setSolveModal((current) => ({
+                    ...current,
+                    allowCopy: event.target.checked,
+                  }))
+                }
+                className="accent-primary-500"
+              />
+              Let other signed-in users copy this solution snippet
+            </label>
+
+            {solveModal.codeSnippet?.trim() && (
+              <CodeSnippetPreview
+                code={solveModal.codeSnippet}
+                language={solveModal.codeLanguage}
+                allowCopy={Boolean(solveModal.allowCopy)}
+              />
+            )}
+          </div>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button
