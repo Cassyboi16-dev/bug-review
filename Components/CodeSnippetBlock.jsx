@@ -608,11 +608,13 @@ export function CodeSnippetPreview({
   language,
   compact = false,
   className = "",
+  allowCopy = true,
 }) {
   const [copied, setCopied] = useState(false);
   if (!code?.trim()) return null;
 
   const copyCode = async () => {
+    if (!allowCopy) return;
     await navigator.clipboard.writeText(code);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
@@ -626,19 +628,26 @@ export function CodeSnippetPreview({
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
           Code snippet
         </span>
-        <span className="text-[11px] text-text-muted">
-          {formatLanguageLabel(language)}
-        </span>
+        <div className="flex items-center gap-2 text-[11px] text-text-muted">
+          {!allowCopy && (
+            <span className="rounded-full border border-border px-2 py-0.5">
+              Copy locked
+            </span>
+          )}
+          <span>{formatLanguageLabel(language)}</span>
+        </div>
       </div>
-      <div className="flex justify-end px-3 pt-2">
-        <button
-          type="button"
-          onClick={copyCode}
-          className="text-[11px] font-semibold text-primary-500 hover:underline"
-        >
-          {copied ? "Copied" : "Copy code"}
-        </button>
-      </div>
+      {allowCopy && (
+        <div className="flex justify-end px-3 pt-2">
+          <button
+            type="button"
+            onClick={copyCode}
+            className="text-[11px] font-semibold text-primary-500 hover:underline"
+          >
+            {copied ? "Copied" : "Copy code"}
+          </button>
+        </div>
+      )}
       <div className="px-3 py-3">
         <HighlightedCode code={code} language={language} compact={compact} />
       </div>

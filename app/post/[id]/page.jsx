@@ -31,7 +31,6 @@ import { AiFillHeart } from "react-icons/ai";
 import { HiTrendingUp } from "react-icons/hi";
 import {
   CodeSnippetPreview,
-  RichTextWithCode,
 } from "@/Components/CodeSnippetBlock";
 import GitHubBadge from "@/Components/GitHubBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
@@ -447,7 +446,8 @@ export default function PostPage() {
               language={post.codeLanguage}
             />
 
-            {post.solved && post.solutionText?.trim() && (
+            {post.solved &&
+              (post.solutionText?.trim() || post.solutionCodeSnippet?.trim()) && (
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-500">
@@ -459,7 +459,20 @@ export default function PostPage() {
                     </span>
                   )}
                 </div>
-                <RichTextWithCode text={post.solutionText} />
+                {post.solutionText?.trim() && (
+                  <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/85">
+                    {post.solutionText}
+                  </p>
+                )}
+                <CodeSnippetPreview
+                  code={post.solutionCodeSnippet}
+                  language={post.solutionCodeLanguage}
+                  allowCopy={
+                    post.solutionAllowCopy === undefined
+                      ? true
+                      : Boolean(post.solutionAllowCopy)
+                  }
+                />
               </div>
             )}
 

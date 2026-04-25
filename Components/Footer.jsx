@@ -1,40 +1,96 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FaInstagram } from "react-icons/fa";
-import { FaDiscord, FaXTwitter } from "react-icons/fa6";
+import { FaDiscord, FaInstagram } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { IoLogoGithub } from "react-icons/io";
 
-export default function Footer() {
-  const footerLinks = [
-    { label: "Chat with Us", url: "/chat" },
-    { label: "Terms & Conditions", url: "/terms" },
-    { label: "Privacy Policy", url: "/privacy" },
-  ];
+const footerLinks = [
+  { label: "Explore", url: "/explore" },
+  { label: "Blog", url: "/blog" },
+  { label: "Terms", url: "/terms" },
+  { label: "Privacy", url: "/privacy" },
+];
 
+const socialLinks = [
+  { label: "X", icon: <FaXTwitter />, href: "https://x.com/BugReviewHQ" },
+  { label: "Instagram", icon: <FaInstagram />, href: "https://instagram.com/bugreview" },
+  { label: "Discord", icon: <FaDiscord />, href: "https://discord.gg/V3XURyxCU" },
+  {
+    label: "GitHub",
+    icon: <IoLogoGithub />,
+    href: "https://github.com/Cassyboi16-dev/bug-review",
+  },
+];
+
+export default function Footer() {
   return (
-    <footer className="bg-surface text-foreground border-t border-border mt-10">
-      {/* MAIN CONTAINER */}
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* TOP SECTION */}
-        <div className="flex flex-col items-center text-center gap-3">
-          <div className="p-2 rounded-full bg-surface-muted border border-border">
-            <Image
-              src={"/bug.png"}
-              alt="logo"
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
+    <footer className="border-t border-border/80 bg-surface/70 backdrop-blur-xl">
+      <div className="page-shell py-10">
+        <div className="section-shell grid gap-8 px-6 py-8 md:grid-cols-[1.2fr_0.8fr_0.9fr]">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl border border-border bg-background/60 p-2">
+                <Image
+                  src="/bug.png"
+                  alt="BugReview"
+                  width={36}
+                  height={36}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">BugReview</p>
+                <p className="text-xs text-text-muted">
+                  Faster debugging, cleaner collaboration.
+                </p>
+              </div>
+            </div>
+            <p className="max-w-md text-sm leading-7 text-text-muted">
+              A focused developer workspace for bug reports, verified authors,
+              practical solutions, and technical writing that feels useful on a busy day.
+            </p>
           </div>
 
-          <h1 className="text-lg font-semibold tracking-wide">BugReview</h1>
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              Product
+            </p>
+            <div className="flex flex-col gap-3 text-sm">
+              {footerLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.url}
+                  className="text-text-muted transition hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
 
-          <p className="text-xs text-text-muted max-w-md">
-            A community-driven space where developers share bugs, tutorials, and
-            insights.
-          </p>
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+              Community
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {socialLinks.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={item.label}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-background/60 text-text-muted transition hover:border-primary-500/40 hover:text-foreground"
+                >
+                  <span className="text-lg">{item.icon}</span>
+                </a>
+              ))}
+            </div>
+            <p className="text-sm text-text-muted">cassyboi16@proton.me</p>
+          </div>
         </div>
 
+<<<<<<< HEAD
         {/* LINKS */}
         <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm">
           {footerLinks.map((item, index) => (
@@ -58,18 +114,17 @@ export default function Footer() {
 
         {/* BOTTOM BAR */}
         <div className="mt-10 border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-text-muted gap-2">
+=======
+        <div className="mt-4 flex flex-col gap-2 px-2 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
+>>>>>>> e3acc8e32ed37679f00cf4155b98d2b2861f8616
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
-
-          <p className="text-slate-600 dark:text-gray-400">
-            Built for developers • Powered by NextJS & Firebase
-          </p>
-
-          <p className="text-text-muted">Email : cassyboi16@proton.me</p>
+          <p>Built with Next.js, Firebase, and a healthy respect for production sleep.</p>
         </div>
       </div>
     </footer>
   );
 }
+<<<<<<< HEAD
 
 /* Reusable Social Icon */
 function SocialIcon({ icon, src }) {
@@ -84,3 +139,5 @@ function SocialIcon({ icon, src }) {
   );
 }
 
+=======
+>>>>>>> e3acc8e32ed37679f00cf4155b98d2b2861f8616
