@@ -90,33 +90,7 @@ export default function Footer() {
           </div>
         </div>
 
-<<<<<<< HEAD
-        {/* LINKS */}
-        <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm">
-          {footerLinks.map((item, index) => (
-            <Link
-              key={index}
-              href={item.url}
-              className="text-text-muted hover:text-foreground transition hover:underline underline-offset-4"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* SOCIALS */}
-        <div className="flex items-center justify-center gap-5 mt-8">
-          <SocialIcon icon={<FaXTwitter />} src="https://x.com/BugReviewHQ" />
-          <SocialIcon icon={<FaInstagram />} src="https://instagram.com/bugreview" />
-          <SocialIcon icon={<FaDiscord />} src="https://discord.gg/V3XURyxCU" />
-          <SocialIcon icon={<IoLogoGithub />} src="https://github.com/Cassyboi16-dev/bug-review" />
-        </div>
-
-        {/* BOTTOM BAR */}
-        <div className="mt-10 border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-text-muted gap-2">
-=======
         <div className="mt-4 flex flex-col gap-2 px-2 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
->>>>>>> e3acc8e32ed37679f00cf4155b98d2b2861f8616
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
           <p>Built with Next.js, Firebase, and a healthy respect for production sleep.</p>
         </div>
@@ -124,20 +98,3 @@ export default function Footer() {
     </footer>
   );
 }
-<<<<<<< HEAD
-
-/* Reusable Social Icon */
-function SocialIcon({ icon, src }) {
-  return (
-    <a href={src} target="_blank" rel="noopener noreferrer">
-      <div className="p-2 rounded-full bg-surface-muted border border-border hover:bg-background hover:scale-110 transition cursor-pointer">
-        <div className="text-lg text-text-muted hover:text-foreground transition">
-          {icon}
-        </div>
-      </div>
-    </a>
-  );
-}
-
-=======
->>>>>>> e3acc8e32ed37679f00cf4155b98d2b2861f8616
