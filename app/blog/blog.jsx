@@ -6,14 +6,26 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import toast from "react-hot-toast";
-import { FiArrowRight, FiClock, FiFileText, FiPenTool, FiShield } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiClock,
+  FiFileText,
+  FiPenTool,
+  FiShield,
+} from "react-icons/fi";
 import { db } from "@/config/firebase.config";
 import { awardUserProgress } from "@/lib/client/gamification";
-import { CodeSnippetEditor, CodeSnippetPreview } from "@/Components/CodeSnippetBlock";
+import {
+  CodeSnippetEditor,
+  CodeSnippetPreview,
+} from "@/Components/CodeSnippetBlock";
 import Editor from "@/Components/blog/Editor";
 
 function stripHtml(value = "") {
-  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function estimateReadTime(value = "") {
@@ -67,7 +79,10 @@ export default function BlogWorkspace({ session }) {
   });
 
   const canPublish = Boolean(profile?.verifiedForBlogging);
-  const readTime = useMemo(() => estimateReadTime(form.content), [form.content]);
+  const readTime = useMemo(
+    () => estimateReadTime(form.content),
+    [form.content],
+  );
 
   useEffect(() => {
     if (!session?.user?.profileId) return;
@@ -95,8 +110,12 @@ export default function BlogWorkspace({ session }) {
       const nextPosts = snapshot.docs
         .map((item) => ({ id: item.id, ...item.data() }))
         .sort((left, right) => {
-          const leftDate = new Date(left.updatedAt || left.createdAt || 0).getTime();
-          const rightDate = new Date(right.updatedAt || right.createdAt || 0).getTime();
+          const leftDate = new Date(
+            left.updatedAt || left.createdAt || 0,
+          ).getTime();
+          const rightDate = new Date(
+            right.updatedAt || right.createdAt || 0,
+          ).getTime();
           return rightDate - leftDate;
         });
       setPosts(nextPosts);
@@ -117,7 +136,11 @@ export default function BlogWorkspace({ session }) {
   };
 
   const requestPublisherAccess = async () => {
-    if (!setupForm.email.trim() || !setupForm.topics.trim() || !setupForm.reason.trim()) {
+    if (
+      !setupForm.email.trim() ||
+      !setupForm.topics.trim() ||
+      !setupForm.reason.trim()
+    ) {
       toast.error("Add your email, topics, and a short publishing focus.");
       return;
     }
@@ -197,12 +220,12 @@ export default function BlogWorkspace({ session }) {
               Blog workspace
             </span>
             <div className="space-y-3">
-              <h1 className="max-w-2xl text-3xl font-black tracking-tight md:text-5xl">
-                Publish technical writing with the same calm, product-grade feel as the rest of BugReview.
+              <h1 className="max-w-2xl text-3xl font-bold tracking-tight md:text-5xl">
+                Welcome to BugReview Blog Workspace
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-text-muted md:text-base">
-                Draft cleaner posts, attach runnable snippets, and manage your articles
-                from one place without leaving the app.
+                Draft cleaner posts, attach runnable snippets, and manage your
+                articles from one place without leaving the app.
               </p>
             </div>
           </div>
@@ -212,7 +235,9 @@ export default function BlogWorkspace({ session }) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Posts
               </p>
-              <p className="mt-3 text-3xl font-black text-foreground">{posts.length}</p>
+              <p className="mt-3 text-3xl font-bold text-foreground">
+                {posts.length}
+              </p>
             </div>
             <div className="metric-card">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
@@ -221,12 +246,6 @@ export default function BlogWorkspace({ session }) {
               <p className="mt-3 text-lg font-semibold text-foreground">
                 {canPublish ? "Publisher ready" : "Setup required"}
               </p>
-            </div>
-            <div className="metric-card">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                Reader pace
-              </p>
-              <p className="mt-3 text-lg font-semibold text-foreground">{readTime} min read</p>
             </div>
           </div>
         </div>
@@ -244,8 +263,8 @@ export default function BlogWorkspace({ session }) {
                 Unlock your blog once and keep writing.
               </h2>
               <p className="text-sm leading-7 text-text-muted">
-                We use your signed-in account as the identity anchor, then store the
-                author details you want attached to published articles.
+                We use your signed-in account as the identity anchor, then store
+                the author details you want attached to published articles.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -271,7 +290,9 @@ export default function BlogWorkspace({ session }) {
                 <input
                   type="email"
                   value={setupForm.email}
-                  onChange={(event) => updateSetupField("email", event.target.value)}
+                  onChange={(event) =>
+                    updateSetupField("email", event.target.value)
+                  }
                   className="input"
                   placeholder="you@example.com"
                 />
@@ -281,7 +302,9 @@ export default function BlogWorkspace({ session }) {
                 <input
                   type="tel"
                   value={setupForm.phone}
-                  onChange={(event) => updateSetupField("phone", event.target.value)}
+                  onChange={(event) =>
+                    updateSetupField("phone", event.target.value)
+                  }
                   className="input"
                   placeholder="+234..."
                 />
@@ -293,7 +316,9 @@ export default function BlogWorkspace({ session }) {
               <input
                 type="text"
                 value={setupForm.topics}
-                onChange={(event) => updateSetupField("topics", event.target.value)}
+                onChange={(event) =>
+                  updateSetupField("topics", event.target.value)
+                }
                 className="input"
                 placeholder="Next.js, Firebase, debugging, DX"
               />
@@ -303,7 +328,9 @@ export default function BlogWorkspace({ session }) {
               What should readers expect from your posts?
               <textarea
                 value={setupForm.reason}
-                onChange={(event) => updateSetupField("reason", event.target.value)}
+                onChange={(event) =>
+                  updateSetupField("reason", event.target.value)
+                }
                 className="textarea"
                 placeholder="Short practical write-ups, production lessons, and fixes that save people time."
               />
@@ -311,7 +338,8 @@ export default function BlogWorkspace({ session }) {
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs leading-6 text-text-muted">
-                Your current session stays the source of truth for author ownership.
+                Your current session stays the source of truth for author
+                ownership.
               </p>
               <button
                 type="button"
@@ -332,10 +360,9 @@ export default function BlogWorkspace({ session }) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
               Authoring
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-foreground">Compose your next article</h2>
-          </div>
-          <div className="rounded-full border border-border bg-background/60 px-4 py-2 text-xs text-text-muted">
-            {readTime} min estimated read
+            <h2 className="mt-2 text-2xl font-bold text-foreground">
+              Compose your next article
+            </h2>
           </div>
         </div>
 
@@ -356,7 +383,9 @@ export default function BlogWorkspace({ session }) {
                 Category
                 <input
                   value={form.category}
-                  onChange={(event) => updateField("category", event.target.value)}
+                  onChange={(event) =>
+                    updateField("category", event.target.value)
+                  }
                   className="input"
                   placeholder="Authentication"
                   disabled={!canPublish || publishing}
@@ -401,7 +430,9 @@ export default function BlogWorkspace({ session }) {
                 Snippet language
                 <input
                   value={form.codeLanguage}
-                  onChange={(event) => updateField("codeLanguage", event.target.value)}
+                  onChange={(event) =>
+                    updateField("codeLanguage", event.target.value)
+                  }
                   className="input"
                   placeholder="TypeScript"
                   disabled={!canPublish || publishing}
@@ -450,7 +481,9 @@ export default function BlogWorkspace({ session }) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
               Library
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-foreground">Your published work</h2>
+            <h2 className="mt-2 text-2xl font-bold text-foreground">
+              Your published work
+            </h2>
           </div>
           <div className="rounded-full border border-border bg-background/60 px-4 py-2 text-xs text-text-muted">
             {posts.length} total posts
@@ -461,9 +494,12 @@ export default function BlogWorkspace({ session }) {
           <div className="panel-shell flex flex-col items-center gap-3 px-6 py-10 text-center">
             <FiFileText className="h-10 w-10 text-primary-500/70" />
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-foreground">No blog posts yet</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                No blog posts yet
+              </h3>
               <p className="max-w-md text-sm leading-7 text-text-muted">
-                Your first article will show up here with quick access to the live page.
+                Your first article will show up here with quick access to the
+                live page.
               </p>
             </div>
           </div>
@@ -487,7 +523,9 @@ export default function BlogWorkspace({ session }) {
                   <h3 className="text-lg font-semibold text-foreground transition group-hover:text-primary-500">
                     {post.title}
                   </h3>
-                  <p className="text-sm leading-7 text-text-muted">{post.summary}</p>
+                  <p className="text-sm leading-7 text-text-muted">
+                    {post.summary}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between gap-4 text-xs text-text-muted">
                   <span className="inline-flex items-center gap-2">

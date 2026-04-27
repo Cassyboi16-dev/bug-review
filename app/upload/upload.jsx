@@ -12,6 +12,14 @@ import { IoMdGlobe } from "react-icons/io";
 import { FiArrowRight } from "react-icons/fi";
 import { CodeSnippetEditor } from "@/Components/CodeSnippetBlock";
 import { awardUserProgress } from "@/lib/client/gamification";
+import { FaRegClipboard } from "react-icons/fa6";
+import { FcCheckmark } from "react-icons/fc";
+import { FcHighPriority } from "react-icons/fc";
+import { MdOutlinePrivacyTip } from "react-icons/md";
+import { IoConstruct } from "react-icons/io5";
+import { HiOutlineDocumentSearch } from "react-icons/hi";
+import { FaHandshake } from "react-icons/fa";
+import { PiWarningOctagonDuotone } from "react-icons/pi";
 
 export default function UploadClient({ session }) {
   const author = session?.user?.username || session?.user?.name || "Anonymous";
@@ -87,12 +95,12 @@ export default function UploadClient({ session }) {
   });
 
   const guidelines = [
-    { icon: "✅", title: "Be specific", desc: "Include steps to reproduce, error messages and your environment." },
-    { icon: "🤝", title: "Be respectful", desc: "Treat every member with kindness. No harassment or hate speech." },
-    { icon: "🔍", title: "Search first", desc: "Check if your bug has already been reported to avoid duplicates." },
-    { icon: "🔒", title: "Protect privacy", desc: "Never share API keys, passwords, tokens or sensitive data." },
-    { icon: "🚫", title: "No spam", desc: "Avoid duplicate posts, excessive promotion or off-topic content." },
-    { icon: "💡", title: "Stay constructive", desc: "Focus on solutions. Feedback should help, not discourage." },
+    { icon: <FcCheckmark />, title: "Be specific", desc: "Include steps to reproduce, error messages and your environment." },
+    { icon: <FaHandshake />, title: "Be respectful", desc: "Treat every member with kindness. No harassment or hate speech." },
+    { icon: <HiOutlineDocumentSearch />, title: "Search first", desc: "Check if your bug has already been reported to avoid duplicates." },
+    { icon: <MdOutlinePrivacyTip />, title: "Protect privacy", desc: "Never share API keys, passwords, tokens or sensitive data." },
+    { icon: <FcHighPriority /> , title: "No spam", desc: "Avoid duplicate posts, excessive promotion or off-topic content." },
+    { icon: <IoConstruct />, title: "Stay constructive", desc: "Focus on solutions. Feedback should help, not discourage." },
   ];
 
   return (
@@ -173,12 +181,12 @@ export default function UploadClient({ session }) {
               );
               setUnlockedAchievements(unlocked);
               setStatus("success");
-              successAudioRef.current?.play();
+              successAudioRef.current?.play("/success.mp3");
               resetForm();
               setTimeout(() => setStatus("idle"), 2500);
             } catch {
               setStatus("error");
-              errorAudioRef.current?.play();
+              errorAudioRef.current?.play("/buzz.mp3");
               setTimeout(() => setStatus("idle"), 2500);
             }
           }}
@@ -351,7 +359,7 @@ export default function UploadClient({ session }) {
                 disabled={status === "loading"}
                 className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-colors disabled:opacity-50"
               >
-                {status === "loading" ? "Posting…" : "Post report"}
+                {status === "loading" ? "Posting…" : "Post"}
                 <FiArrowRight className="w-4 h-4" />
               </motion.button>
             </motion.div>
@@ -374,7 +382,7 @@ export default function UploadClient({ session }) {
             className="w-full h-12 flex items-center justify-between text-xs text-text-muted hover:text-foreground transition-colors"
           >
             <span className="flex items-center gap-2">
-              <span>📋</span>
+              <span><FaRegClipboard /></span>
               Community guidelines
             </span>
             <motion.span
@@ -408,8 +416,8 @@ export default function UploadClient({ session }) {
                     ))}
                   </div>
 
-                  <p className="text-xs text-text-muted border-t border-border pt-3">
-                    ⚠️ Violations may result in post removal or account suspension. Repeated offences can lead to a permanent ban.
+                  <p className="text-xs text-text-muted border-t border-border pt-3 flex items-start">
+                   <span className="text-red-600 ml-5 p-2"><PiWarningOctagonDuotone /></span> Violations may result in post removal or account suspension. Repeated offences can lead to a permanent ban.
                   </p>
 
                   <div className="flex items-center justify-between text-xs text-text-muted">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, increment, onSnapshot, updateDoc } from "firebase/firestore";
-import { FiArrowLeft, FiClock, FiExternalLink, FiEye } from "react-icons/fi";
+import { FiArrowLeft, FiExternalLink, FiEye } from "react-icons/fi";
 import GitHubBadge from "@/Components/GitHubBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { CodeSnippetPreview } from "@/Components/CodeSnippetBlock";
@@ -26,7 +26,7 @@ function formatDate(value) {
   }).format(date);
 }
 
-function BlogDetailSkeleton() {
+ function BlogDetailSkeleton() {
   return (
     <main className="page-shell">
       <div className="section-shell animate-pulse space-y-6 px-6 py-8">
@@ -83,7 +83,9 @@ export default function BlogDetailPage() {
     return (
       <main className="page-shell">
         <section className="section-shell flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h1 className="text-2xl font-bold text-foreground">Article not found</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Article not found
+          </h1>
           <p className="max-w-md text-sm leading-7 text-text-muted">
             This post may have been removed or the link is no longer valid.
           </p>
@@ -112,10 +114,7 @@ export default function BlogDetailPage() {
             <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
               {post.category || "General"}
             </span>
-            <span className="inline-flex items-center gap-2 text-xs text-text-muted">
-              <FiClock className="h-3.5 w-3.5" />
-              {post.readTimeMinutes || 1} min read
-            </span>
+
             <span className="inline-flex items-center gap-2 text-xs text-text-muted">
               <FiEye className="h-3.5 w-3.5" />
               {post.views || 0} views
@@ -161,7 +160,9 @@ export default function BlogDetailPage() {
                   <p className="truncate text-sm font-semibold text-foreground">
                     {post.author || "Anonymous"}
                   </p>
-                  <p className="text-xs text-text-muted">{formatDate(post.createdAt)}</p>
+                  <p className="text-xs text-text-muted">
+                    {formatDate(post.createdAt)}
+                  </p>
                 </div>
               </div>
 

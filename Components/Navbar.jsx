@@ -37,6 +37,7 @@ export default function Navbar() {
   const mainLinks = [
     { label: "Home", url: "/" },
     ...(session ? [{ label: "Explore", url: "/explore" }] : []),
+    ...(session ? [{ label: "Blogs", url:"/blogger" }] : []),
   ];
 
   const extraLinks = [
