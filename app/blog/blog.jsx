@@ -202,7 +202,7 @@ export default function BlogWorkspace({ session }) {
       await awardUserProgress(session.user.profileId, { blogPostsCount: 1 });
       setForm(initialPostForm);
       toast.success("Blog post published");
-      router.push(`/blog/${data.id}`);
+      router.push(`/blogger`);
     } catch (error) {
       toast.error(error.message || "Publish failed");
     } finally {
@@ -267,26 +267,12 @@ export default function BlogWorkspace({ session }) {
                 the author details you want attached to published articles.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="metric-card">
-                <p className="text-xs font-semibold text-text-muted">Email</p>
-                <p className="mt-2 text-sm text-foreground">Required</p>
-              </div>
-              <div className="metric-card">
-                <p className="text-xs font-semibold text-text-muted">Topics</p>
-                <p className="mt-2 text-sm text-foreground">Required</p>
-              </div>
-              <div className="metric-card">
-                <p className="text-xs font-semibold text-text-muted">Phone</p>
-                <p className="mt-2 text-sm text-foreground">Optional</p>
-              </div>
-            </div>
           </div>
 
           <div className="panel-shell grid gap-4 p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm text-foreground">
-                Publishing email
+                Publishing email (required)
                 <input
                   type="email"
                   value={setupForm.email}
@@ -298,7 +284,7 @@ export default function BlogWorkspace({ session }) {
                 />
               </label>
               <label className="grid gap-2 text-sm text-foreground">
-                Phone number
+                Phone number (optional)
                 <input
                   type="tel"
                   value={setupForm.phone}
@@ -312,7 +298,7 @@ export default function BlogWorkspace({ session }) {
             </div>
 
             <label className="grid gap-2 text-sm text-foreground">
-              Topics you plan to write about
+              Topics you plan to write about (required)
               <input
                 type="text"
                 value={setupForm.topics}
@@ -325,7 +311,7 @@ export default function BlogWorkspace({ session }) {
             </label>
 
             <label className="grid gap-2 text-sm text-foreground">
-              What should readers expect from your posts?
+              What should readers expect from your posts? (required)
               <textarea
                 value={setupForm.reason}
                 onChange={(event) =>

@@ -16,6 +16,9 @@ import {
   FiShare2,
   FiZap,
 } from "react-icons/fi";
+import { IoBug } from "react-icons/io5";
+import { GoComment } from "react-icons/go";
+import { GoRocket } from "react-icons/go";
 
 // ── Country flag util ──────────────────────────
 const COUNTRY_CODES = {
@@ -448,19 +451,19 @@ export default function Home() {
             {[
               {
                 num: "01",
-                icon: "🐛",
+                icon: <IoBug />,
                 title: "Post your bug",
                 desc: "Describe what broke, paste your error, share your environment. Takes 60 seconds.",
               },
               {
                 num: "02",
-                icon: "💬",
+                icon: <GoComment />,
                 title: "Get real feedback",
                 desc: "Developers who've faced the same issue reply, suggest fixes, and dig into the root cause.",
               },
               {
                 num: "03",
-                icon: "🚀",
+                icon: <GoRocket />,
                 title: "Ship with confidence",
                 desc: "Mark it resolved, learn from it, and help the next developer who hits the same wall.",
               },
