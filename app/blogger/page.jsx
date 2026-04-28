@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
+import { db } from "@/config/firebase.config";
 import {
   collection,
   onSnapshot,
@@ -11,233 +11,262 @@ import {
   arrayRemove,
   increment,
 } from "firebase/firestore";
-import { db } from "@/config/firebase.config";
+
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
+
 import {
   FiHeart,
-  FiBookmark,
+  FiMessageCircle,
   FiShare2,
-  FiEye,
+  FiSend,
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
-import { CiBookmark } from "react-icons/ci";
-import toast, { Toaster } from "react-hot-toast";
 
-export default function BlogsPage({ session }) {
-  const userId = session?.user?.id || session?.user?.email || "anonymous";
+/* ✅ SSR-safe syntax highlighting */
+const CodeSnippetPreview = dynamic(
+  () =>
+    import("@/Components/CodeSnippetBlock").then(
+      (m) => m.CodeSnippetPreview
+    ),
+  { ssr: false }
+);
 
+/* ───────────────────────────── */
+/* COMMENT INPUT */
+/* ───────────────────────────── */
+function CommentInput({ onSubmit }) {
+  const [text, setText] = useState("");
+
+  const submit = () => {
+    if (!text.trim()) return;
+    onSubmit(text.trim());
+    setText("");
+  };
+
+  return (
+    <div className="flex gap-2">
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submit()}
+        placeholder="Add a comment..."
+        className="flex-1 px-4 py-2 rounded-full bg-background border border-border text-sm"
+      />
+      <button
+        onClick={submit}
+        className="p-2 rounded-full bg-primary-500 text-white"
+      >
+        <FiSend />
+      </button>
+    </div>
+  );
+}
+
+/* ───────────────────────────── */
+/* COMMENT NODE */
+/* ───────────────────────────── */
+function CommentNode({ comment, allComments, postId }) {
+  const replies = allComments.filter(
+    (c) => c.parentId === comment.id
+  );
+
+  return (
+    <div className="ml-2 mt-2">
+      <p className="text-sm text-foreground">{comment.text}</p>
+
+      {replies.length > 0 && (
+        <div className="ml-4 border-l border-border pl-3 mt-2 space-y-2">
+          {replies.map((r) => (
+            <CommentNode
+              key={r.id}
+              comment={r}
+              allComments={allComments}
+              postId={postId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ───────────────────────────── */
+/* MAIN PAGE */
+/* ───────────────────────────── */
+export default function BloggerPage() {
   const [posts, setPosts] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortMode, setSortMode] = useState("recent");
+  const [expandedComments, setExpandedComments] = useState({});
 
-  // ── FETCH ─────────────────────────
+  /* ── Fetch posts ── */
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "blogPosts"), (snapshot) => {
-      setPosts(snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })));
-    });
-
+    const unsub = onSnapshot(
+      collection(db, "blogPosts"),
+      (snap) => {
+        setPosts(
+          snap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+        );
+      }
+    );
     return () => unsub();
   }, []);
 
-  // ── FILTER ────────────────────────
-  const filteredPosts = useMemo(() => {
-    let result = [...posts];
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title?.toLowerCase().includes(q) ||
-          p.summary?.toLowerCase().includes(q)
-      );
-    }
-
-    if (sortMode === "popular") {
-      result.sort(
-        (a, b) => (b.likedBy?.length || 0) - (a.likedBy?.length || 0)
-      );
-    } else {
-      result.sort((a, b) => b.createdAt - a.createdAt);
-    }
-
-    return result;
-  }, [posts, searchQuery, sortMode]);
-
-  // ── ACTIONS ───────────────────────
+  /* ── Like ── */
   const toggleLike = async (post) => {
     const ref = doc(db, "blogPosts", post.id);
-    const liked = post.likedBy?.includes(userId);
+    const liked = post.likedBy?.includes("user");
 
     await updateDoc(ref, {
-      likedBy: liked ? arrayRemove(userId) : arrayUnion(userId),
+      likedBy: liked
+        ? arrayRemove("user")
+        : arrayUnion("user"),
     });
-
-    toast.success(liked ? "Unliked" : "Liked ❤️", { duration: 1200 });
   };
 
-  const toggleSave = async (post) => {
-    const ref = doc(db, "blogPosts", post.id);
-    const saved = post.savedBy?.includes(userId);
+  /* ── Comment ── */
+  const addComment = async (postId, text) => {
+    const entry = {
+      id: Date.now().toString(),
+      text,
+      parentId: null,
+      createdAt: Date.now(),
+    };
 
-    await updateDoc(ref, {
-      savedBy: saved ? arrayRemove(userId) : arrayUnion(userId),
+    await updateDoc(doc(db, "blogPosts", postId), {
+      comments: arrayUnion(entry),
     });
 
-    toast.success(saved ? "Unsaved" : "Saved 🔖", { duration: 1200 });
+    toast.success("Comment added");
   };
 
+  /* ── Share (SSR safe) ── */
   const sharePost = async (post) => {
+    if (typeof window === "undefined") return;
+
     const url = `${window.location.origin}/blogs/${post.id}`;
+
     await navigator.clipboard.writeText(url);
 
     await updateDoc(doc(db, "blogPosts", post.id), {
       shares: increment(1),
     });
 
-    toast.success("Link copied", { duration: 1200 });
+    toast.success("Link copied");
   };
 
-  // ── UI ────────────────────────────
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Toaster position="bottom-center" />
 
-      <div className="max-w-3xl mx-auto border-x border-border">
+      <div className="max-w-3xl mx-auto p-4 space-y-4">
+        <h1 className="text-xl font-bold">Blogger</h1>
 
-        {/* HEADER (Explore style) */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3">
-          <h1 className="text-base font-bold">Blogs</h1>
+        {posts.map((post) => {
+          const liked = post.likedBy?.includes("user");
 
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              placeholder="Search blogs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-surface border border-border rounded-lg px-3 py-1.5 text-sm outline-none"
-            />
-
-            <select
-              value={sortMode}
-              onChange={(e) => setSortMode(e.target.value)}
-              className="bg-surface border border-border rounded-lg px-2 text-sm"
+          return (
+            <div
+              key={post.id}
+              className="border border-border rounded-2xl p-4 space-y-3"
             >
-              <option value="recent">Recent</option>
-              <option value="popular">Popular</option>
-            </select>
-          </div>
-        </div>
+              {/* Title */}
+              <h2 className="font-bold text-lg">
+                {post.title}
+              </h2>
 
-        {/* FEED */}
-        {filteredPosts.length > 0 ? (
-          <div className="divide-y divide-border">
+              {/* Description */}
+              <p className="text-sm text-foreground/80">
+                {post.summary}
+              </p>
 
-            {filteredPosts.map((post) => {
-              const liked = post.likedBy?.includes(userId);
-              const saved = post.savedBy?.includes(userId);
+              {/* Code */}
+              {post.codeSnippet && (
+                <CodeSnippetPreview
+                  code={post.codeSnippet}
+                  language={post.codeLanguage}
+                />
+              )}
 
-              return (
-                <article
-                  key={post.id}
-                  className="px-4 py-4 hover:bg-surface/50 transition"
+              {/* Read More */}
+              <Link
+                href={`/blogs/${post.id}`}
+                className="text-primary-500 text-sm"
+              >
+                Read more →
+              </Link>
+
+              {/* Actions */}
+              <div className="flex items-center gap-4 text-sm text-text-muted">
+                {/* Like */}
+                <button
+                  onClick={() => toggleLike(post)}
+                  className="flex items-center gap-1"
                 >
-                  <div className="flex gap-3">
+                  {liked ? (
+                    <AiFillHeart className="text-red-400" />
+                  ) : (
+                    <FiHeart />
+                  )}
+                  {post.likedBy?.length || 0}
+                </button>
 
-                    {/* Avatar */}
-                    <img
-                      src={
-                        post.authorImg ||
-                        `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`
+                {/* Comment */}
+                <button
+                  onClick={() =>
+                    setExpandedComments((p) => ({
+                      ...p,
+                      [post.id]: !p[post.id],
+                    }))
+                  }
+                  className="flex items-center gap-1"
+                >
+                  <FiMessageCircle />
+                  {post.comments?.length || 0}
+                </button>
+
+                {/* Share */}
+                <button
+                  onClick={() => sharePost(post)}
+                  className="flex items-center gap-1"
+                >
+                  <FiShare2 />
+                </button>
+              </div>
+
+              {/* Comments */}
+              <AnimatePresence>
+                {expandedComments[post.id] && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="border-t border-border pt-3 space-y-3"
+                  >
+                    {(post.comments || []).map((c) => (
+                      <CommentNode
+                        key={c.id}
+                        comment={c}
+                        allComments={post.comments}
+                        postId={post.id}
+                      />
+                    ))}
+
+                    <CommentInput
+                      onSubmit={(text) =>
+                        addComment(post.id, text)
                       }
-                      className="w-10 h-10 rounded-full border border-border"
                     />
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-
-                      {/* Author */}
-                      <div className="text-sm font-bold">
-                        {post.author || "Anonymous"}
-                      </div>
-
-                      {/* Title */}
-                      <h2 className="text-sm font-bold leading-snug mt-1">
-                        {post.title}
-                      </h2>
-
-                      {/* Summary */}
-                      <p className="text-sm text-foreground/80 mt-1 line-clamp-2">
-                        {post.summary}
-                      </p>
-
-                      {/* Read */}
-                      <Link href={`/blogs/${post.id}`}>
-                        <span className="text-xs text-primary-500 hover:underline mt-1 inline-block">
-                          Read more →
-                        </span>
-                      </Link>
-
-                      {/* ACTION BAR (IDENTICAL STYLE) */}
-                      <div className="flex items-center justify-between mt-3 -mx-1.5">
-
-                        <div className="flex gap-4">
-
-                          {/* Like */}
-                          <button
-                            onClick={() => toggleLike(post)}
-                            className={`flex items-center gap-1 text-xs ${
-                              liked
-                                ? "text-red-400"
-                                : "text-text-muted hover:text-red-400"
-                            }`}
-                          >
-                            {liked ? <AiFillHeart /> : <FiHeart />}
-                            {post.likedBy?.length || 0}
-                          </button>
-
-                          {/* Share */}
-                          <button
-                            onClick={() => sharePost(post)}
-                            className="flex items-center gap-1 text-xs text-text-muted hover:text-primary-500"
-                          >
-                            <FiShare2 />
-                            {post.shares || 0}
-                          </button>
-
-                          {/* Save */}
-                          <button
-                            onClick={() => toggleSave(post)}
-                            className={`flex items-center gap-1 text-xs ${
-                              saved
-                                ? "text-primary-500"
-                                : "text-text-muted hover:text-primary-500"
-                            }`}
-                          >
-                            {saved ? <CiBookmark /> : <FiBookmark />}
-                          </button>
-                        </div>
-
-                        {/* Views */}
-                        <div className="flex items-center gap-1 text-xs text-text-muted">
-                          <FiEye />
-                          {post.viewedBy?.length || 0}
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-
-          </div>
-        ) : (
-          <div className="p-10 text-center text-sm text-text-muted">
-            No blogs found.
-          </div>
-        )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </div>
     </main>
   );
