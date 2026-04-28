@@ -195,9 +195,9 @@ export default function BloggerPage() {
               {/* Read More */}
               <Link
                 href={`/blogs/${post.id}`}
-                className="text-primary-500 text-sm"
+                className="text-blue-500 text-sm hover:underline"
               >
-                Read more →
+                Read more 
               </Link>
 
               {/* Actions */}
