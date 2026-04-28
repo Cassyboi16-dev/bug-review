@@ -89,12 +89,22 @@ export default function BlogsPage({ session }) {
   };
 
   const sharePost = async (post) => {
-    const url = `${window.location.origin}/blogs/${post.id}`;
+  if (typeof window === "undefined") return;
+
+  const url = `${window.location.origin}/blogs/${post.id}`;
+
+  try {
     await navigator.clipboard.writeText(url);
 
     await updateDoc(doc(db, "blogPosts", post.id), {
       shares: increment(1),
     });
+
+    toast.success("Link copied");
+  } catch {
+    toast.error("Failed to copy link");
+  }
+};
 
     toast.success("Link copied", { duration: 1200 });
   };
@@ -241,4 +251,3 @@ export default function BlogsPage({ session }) {
       </div>
     </main>
   );
-}

@@ -17,3 +17,4 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 const analytics = getAnalytics(app);
+analytics.isSupported() && analytics.logEvent("firebase_initialized");
