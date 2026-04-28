@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
+        <template dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         <AuthProvider>
           <Navbar />
           {children}

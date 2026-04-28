@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { IoMdHeartEmpty } from "react-icons/io";
 
 export default function LikeButton({ postId, userId, initialLikes = 0 }) {
   const [likes, setLikes] = useState(initialLikes);
@@ -32,7 +33,7 @@ export default function LikeButton({ postId, userId, initialLikes = 0 }) {
       onClick={handleLike}
       className="border px-3 py-1 rounded-lg text-sm"
     >
-      ❤️ {likes}
+      <IoMdHeartEmpty /> {likes}
     </button>
   );
 }

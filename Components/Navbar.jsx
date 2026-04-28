@@ -37,6 +37,7 @@ export default function Navbar() {
   const mainLinks = [
     { label: "Home", url: "/" },
     ...(session ? [{ label: "Explore", url: "/explore" }] : []),
+    ...(session ? [{ label: "Blogs", url:"/blogger" }] : []),
   ];
 
   const extraLinks = [
@@ -138,7 +139,7 @@ export default function Navbar() {
           <span className="text-foreground font-semibold">BugReview</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm text-text-muted">
+        <nav className="hidden md:flex items-center gap-16 text-sm text-text-muted">
           {mainLinks.map((item) => (
             <Link
               key={item.label}
@@ -204,7 +205,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/signin"
-              className="text-text-muted hover:text-primary-500 pb-2 border-transparent hover:border-primary-500 hover:border-b-2 flex items-center gap-1"
+              className="hover:text-emerald-400 flex items-center gap-1 border hover:border-emerald-400 hover:bg-emerald-200/30 transition rounded-lg px-3 py-2 text-sm text-primary-500"
             >
               <PiUser />
               Sign in

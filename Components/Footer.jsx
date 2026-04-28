@@ -39,15 +39,15 @@ export default function Footer() {
                 />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">BugReview</p>
+                <p className="text-sm font-semibold text-foreground">BugReview®</p>
                 <p className="text-xs text-text-muted">
                   Faster debugging, cleaner collaboration.
                 </p>
               </div>
             </div>
             <p className="max-w-md text-sm leading-7 text-text-muted">
-              A focused developer workspace for bug reports, verified authors,
-              practical solutions, and technical writing that feels useful on a busy day.
+              A focused developer workspace for bug reports, verified authorsand
+              practical solutions, 
             </p>
           </div>
 
@@ -92,7 +92,7 @@ export default function Footer() {
 
         <div className="mt-4 flex flex-col gap-2 px-2 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} BugReview. All rights reserved.</p>
-          <p>Built with Next.js, Firebase, and a healthy respect for production sleep.</p>
+          <p>Built with Beginners in Mind.</p>
         </div>
       </div>
     </footer>
