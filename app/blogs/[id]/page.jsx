@@ -108,7 +108,7 @@ export default function BlogDetailPage() {
         Back
       </button>
 
-      <article className="section-shell overflow-hidden">
+      <article className="section-shell overflow-hidden bg-emerald-200/20 rounded-3xl border border-emerald-200">
         <div className="border-b border-border px-6 py-5">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
@@ -127,7 +127,9 @@ export default function BlogDetailPage() {
           <p className="mt-4 max-w-3xl text-base leading-8 text-text-muted">
             {post.summary}
           </p>
+          
         </div>
+        
 
         <div className="grid gap-6 px-6 py-6 lg:grid-cols-[0.75fr_0.25fr]">
           <div className="space-y-6">
