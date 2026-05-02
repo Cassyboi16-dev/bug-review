@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import toast from "react-hot-toast";
 import {
   FiArrowRight,
@@ -12,6 +19,7 @@ import {
   FiFileText,
   FiPenTool,
   FiShield,
+  FiTrash2,
 } from "react-icons/fi";
 import { db } from "@/config/firebase.config";
 import { awardUserProgress } from "@/lib/client/gamification";
@@ -71,6 +79,7 @@ export default function BlogWorkspace({ session }) {
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
   const [publishing, setPublishing] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState("");
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [form, setForm] = useState(initialPostForm);
   const [setupForm, setSetupForm] = useState({
@@ -207,6 +216,26 @@ export default function BlogWorkspace({ session }) {
       toast.error(error.message || "Publish failed");
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const deletePost = async (post) => {
+    if (!post || post.authorId !== session?.user?.profileId) {
+      toast.error("You can only delete your own blog posts.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${post.title}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeletingPostId(post.id);
+    try {
+      await deleteDoc(doc(db, "blogPosts", post.id));
+      toast.success("Blog post deleted");
+    } catch {
+      toast.error("Could not delete blog post");
+    } finally {
+      setDeletingPostId("");
     }
   };
 
@@ -492,27 +521,37 @@ export default function BlogWorkspace({ session }) {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {posts.map((post) => (
-              <Link
+              <article
                 key={post.id}
-                href={`/blog/${post.id}`}
                 className="panel-shell group grid gap-4 p-5 transition hover:border-primary-500/40"
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
                     {post.category || "General"}
                   </span>
-                  <span className="text-xs text-text-muted">
-                    {post.status === "draft" ? "Draft" : "Published"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-text-muted">
+                      {post.status === "draft" ? "Draft" : "Published"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => deletePost(post)}
+                      disabled={deletingPostId === post.id}
+                      className="rounded-full p-1.5 text-text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-40"
+                      aria-label="Delete blog post"
+                    >
+                      <FiTrash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <Link href={`/blogs/${post.id}`} className="space-y-2">
                   <h3 className="text-lg font-semibold text-foreground transition group-hover:text-primary-500">
                     {post.title}
                   </h3>
                   <p className="text-sm leading-7 text-text-muted">
                     {post.summary}
                   </p>
-                </div>
+                </Link>
                 <div className="flex items-center justify-between gap-4 text-xs text-text-muted">
                   <span className="inline-flex items-center gap-2">
                     <FiClock className="h-3.5 w-3.5" />
@@ -520,10 +559,13 @@ export default function BlogWorkspace({ session }) {
                   </span>
                   <span>{formatDate(post.updatedAt || post.createdAt)}</span>
                 </div>
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary-500">
+                <Link
+                  href={`/blogs/${post.id}`}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary-500"
+                >
                   Open article <FiArrowRight className="h-4 w-4" />
-                </span>
-              </Link>
+                </Link>
+              </article>
             ))}
           </div>
         )}

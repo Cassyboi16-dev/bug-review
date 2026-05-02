@@ -26,6 +26,7 @@ import {
   FiChevronUp,
   FiClock,
   FiGlobe,
+  FiTrash2,
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
 import { HiTrendingUp } from "react-icons/hi";
@@ -33,6 +34,7 @@ import {
   CodeSnippetPreview,
 } from "@/Components/CodeSnippetBlock";
 import GitHubBadge from "@/Components/GitHubBadge";
+import DiscordBadge from "@/Components/DiscordBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
 
@@ -105,13 +107,21 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false, avatarSrc, 
 }
 
 // ─── Recursive comment node ────────────────────
-function CommentNode({ comment, allComments, depth, onAddReply }) {
+function CommentNode({
+  comment,
+  allComments,
+  depth,
+  onAddReply,
+  onDeleteComment,
+  currentUserId,
+}) {
   const [showReply, setShowReply] = useState(false);
   const [showChildren, setShowChildren] = useState(depth < 2);
   const children = allComments
     .filter((c) => c.parentId === comment.id)
     .sort((a, b) => a.createdAt - b.createdAt);
   const indent = Math.min(depth * 18, 54);
+  const isOwner = Boolean(currentUserId && comment.authorId === currentUserId);
 
   return (
     <div style={{ marginLeft: indent }}>
@@ -130,12 +140,17 @@ function CommentNode({ comment, allComments, depth, onAddReply }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-foreground">{comment.author}</span>
-              <GitHubBadge
-                href={comment.authorGithubUrl}
-                username={comment.authorGithubUsername}
-                compact
-              />
-              <BloggerBadge visible={comment.authorIsBlogger} compact />
+          <GitHubBadge
+            href={comment.authorGithubUrl}
+            username={comment.authorGithubUsername}
+            compact
+          />
+          <DiscordBadge
+            visible={comment.authorHasDiscord}
+            username={comment.authorDiscordUsername}
+            compact
+          />
+          <BloggerBadge visible={comment.authorIsBlogger} compact />
               <span className="text-[10px] text-text-muted">{getRelativeTime(comment.createdAt)}</span>
             </div>
             <p className="text-sm text-foreground mt-1 break-words whitespace-pre-wrap leading-relaxed">
@@ -153,6 +168,15 @@ function CommentNode({ comment, allComments, depth, onAddReply }) {
             <FiCornerDownRight className="w-3 h-3" />
             {showReply ? "Cancel" : "Reply"}
           </button>
+          {isOwner && (
+            <button
+              onClick={() => onDeleteComment(comment.id)}
+              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-red-400 transition-colors"
+            >
+              <FiTrash2 className="w-3 h-3" />
+              Delete
+            </button>
+          )}
           {children.length > 0 && (
             <button
               onClick={() => setShowChildren((v) => !v)}
@@ -202,6 +226,8 @@ function CommentNode({ comment, allComments, depth, onAddReply }) {
                 allComments={allComments}
                 depth={depth + 1}
                 onAddReply={onAddReply}
+                onDeleteComment={onDeleteComment}
+                currentUserId={currentUserId}
               />
             ))}
           </motion.div>
@@ -239,6 +265,8 @@ export default function PostPage() {
   const userImg  = session?.user?.image || "";
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
+  const userDiscordUsername = session?.user?.discordUsername || "";
+  const userHasDiscord = session?.user?.linkedProviders?.includes("discord");
   const userProfileId = session?.user?.profileId || "";
   const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
@@ -316,6 +344,8 @@ export default function PostPage() {
         authorImg: userImg,
         authorGithubUrl: userGithubUrl,
         authorGithubUsername: userGithubUsername,
+        authorDiscordUsername: userDiscordUsername,
+        authorHasDiscord: userHasDiscord,
         authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
@@ -336,6 +366,8 @@ export default function PostPage() {
         authorImg: userImg,
         authorGithubUrl: userGithubUrl,
         authorGithubUsername: userGithubUsername,
+        authorDiscordUsername: userDiscordUsername,
+        authorHasDiscord: userHasDiscord,
         authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
@@ -344,6 +376,23 @@ export default function PostPage() {
     if (post.authorId && post.authorId !== userId) {
       await awardUserProgress(userProfileId, { solutionsOfferedCount: 1 });
     }
+  };
+
+  const deleteComment = async (commentId) => {
+    const comment = allComments.find((item) => item.id === commentId);
+    if (!comment || comment.authorId !== userId) return;
+
+    const nextComments = allComments
+      .filter((item) => item.id !== commentId)
+      .map((item) =>
+        item.parentId === commentId
+          ? { ...item, parentId: comment.parentId || null }
+          : item,
+      );
+
+    await updateDoc(doc(db, "bugPosts", id), {
+      comments: nextComments,
+    });
   };
 
   return (
@@ -407,6 +456,11 @@ export default function PostPage() {
                   <GitHubBadge
                     href={post.authorGithubUrl}
                     username={post.authorGithubUsername}
+                    compact
+                  />
+                  <DiscordBadge
+                    visible={post.authorHasDiscord}
+                    username={post.authorDiscordUsername}
                     compact
                   />
                 </div>
@@ -588,6 +642,8 @@ export default function PostPage() {
                 allComments={allComments}
                 depth={0}
                 onAddReply={addReply}
+                onDeleteComment={deleteComment}
+                currentUserId={userId}
               />
             ))
           )}

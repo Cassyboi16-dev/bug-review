@@ -70,6 +70,8 @@ export async function POST(request) {
     authorEmail: session.user.email,
     authorGithubUrl: profile.githubProfileUrl || "",
     authorGithubUsername: profile.githubUsername || "",
+    authorDiscordUsername: profile.discordUsername || "",
+    authorHasDiscord: (profile.linkedProviders || []).includes("discord"),
     authorIsBlogger: Boolean(profile.bloggerBadge || profile.verifiedForBlogging),
     slug: slugify(title),
     status: body.status === "draft" ? "draft" : "published",

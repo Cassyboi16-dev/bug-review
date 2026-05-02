@@ -9,7 +9,8 @@ import toast from "react-hot-toast";
 import { FiArrowRight, FiAward, FiGithub, FiShield, FiUser } from "react-icons/fi";
 import { db } from "@/config/firebase.config";
 import GitHubBadge from "@/Components/GitHubBadge";
-import { getAchievementDetails } from "@/lib/achievements";
+import DiscordBadge from "@/Components/DiscordBadge";
+import { getGamificationSummary } from "@/lib/achievements";
 
 export default function ProfilePage() {
   const { data: session, update } = useSession();
@@ -40,9 +41,18 @@ export default function ProfilePage() {
     return () => unsubscribe();
   }, [session?.user?.profileId, session?.user?.username]);
 
-  const achievements = useMemo(
-    () => getAchievementDetails(profile?.achievements || []),
-    [profile?.achievements],
+  const gamification = useMemo(
+    () =>
+      getGamificationSummary(
+        profile?.stats || session?.user?.userStats || {},
+        profile?.achievements || session?.user?.achievements || [],
+      ),
+    [
+      profile?.achievements,
+      profile?.stats,
+      session?.user?.achievements,
+      session?.user?.userStats,
+    ],
   );
 
   if (!session) return null;
@@ -168,6 +178,13 @@ export default function ProfilePage() {
             href={profile?.githubProfileUrl || session.user?.githubProfileUrl}
             username={profile?.githubUsername || session.user?.githubUsername}
           />
+          <DiscordBadge
+            visible={
+              profile?.linkedProviders?.includes("discord") ||
+              session.user?.linkedProviders?.includes("discord")
+            }
+            username={profile?.discordUsername || session.user?.discordUsername}
+          />
 
           {profile?.githubProfileUrl && (
             <button
@@ -245,15 +262,42 @@ export default function ProfilePage() {
               <FiAward className="h-4 w-4 text-primary-500" />
               <p className="text-sm font-semibold text-foreground">Achievements</p>
             </div>
-            {achievements.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {achievements.map((achievement) => (
-                  <span
+            <div className="rounded-2xl border border-border bg-background p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-text-muted">
+                    Level {gamification.level}
+                  </p>
+                  <p className="mt-1 text-lg font-black text-foreground">
+                    {gamification.score} XP
+                  </p>
+                </div>
+                <span className="rounded-full bg-primary-500/10 px-3 py-1 text-xs font-bold text-primary-500">
+                  {gamification.levelProgress}%
+                </span>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-primary-500"
+                  style={{ width: `${gamification.levelProgress}%` }}
+                />
+              </div>
+            </div>
+
+            {gamification.achievements.length > 0 ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {gamification.achievements.map((achievement) => (
+                  <div
                     key={achievement.key}
-                    className="rounded-full border border-primary-500/20 bg-primary-500/8 px-3 py-1 text-xs font-medium text-primary-500"
+                    className="rounded-xl border border-primary-500/20 bg-primary-500/8 px-3 py-2"
                   >
-                    {achievement.title}
-                  </span>
+                    <p className="text-xs font-bold text-primary-500">
+                      {achievement.title}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-5 text-text-muted">
+                      {achievement.description}
+                    </p>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -261,6 +305,27 @@ export default function ProfilePage() {
                 Your first milestone appears as soon as you post, help, or publish.
               </p>
             )}
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              {gamification.tracks.map((track) => (
+                <div key={track.key} className="rounded-xl bg-background p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold text-foreground">
+                      {track.label}
+                    </p>
+                    <p className="text-[11px] text-text-muted">
+                      {track.value}/{track.nextMilestone}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
+                    <div
+                      className="h-full rounded-full bg-accent-500"
+                      style={{ width: `${track.progress}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <button

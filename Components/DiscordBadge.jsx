@@ -1,17 +1,18 @@
+"use client";
+
 import ProviderBadge from "@/Components/ProviderBadge";
 
-export default function GitHubBadge({
-  href,
+export default function DiscordBadge({
+  visible = true,
   username,
   className = "",
   compact = false,
 }) {
-  if (!href) return null;
+  if (!visible) return null;
 
   return (
     <ProviderBadge
-      provider="github"
-      href={href}
+      provider="discord"
       username={username}
       className={className}
       compact={compact}

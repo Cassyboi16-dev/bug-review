@@ -3,9 +3,23 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, increment, onSnapshot, updateDoc } from "firebase/firestore";
-import { FiArrowLeft, FiExternalLink, FiEye } from "react-icons/fi";
+import { useSession } from "next-auth/react";
+import {
+  deleteDoc,
+  doc,
+  increment,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
+import {
+  FiArrowLeft,
+  FiExternalLink,
+  FiEye,
+  FiTrash2,
+} from "react-icons/fi";
+import toast from "react-hot-toast";
 import GitHubBadge from "@/Components/GitHubBadge";
+import DiscordBadge from "@/Components/DiscordBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { CodeSnippetPreview } from "@/Components/CodeSnippetBlock";
 import { db } from "@/config/firebase.config";
@@ -44,8 +58,10 @@ function formatDate(value) {
 export default function BlogDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [post, setPost] = useState(null);
   const [missing, setMissing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const trackedView = useRef(false);
 
   useEffect(() => {
@@ -74,6 +90,31 @@ export default function BlogDetailPage() {
   }, [params?.id]);
 
   const tags = useMemo(() => post?.tags || [], [post?.tags]);
+  const isOwner = Boolean(
+    post &&
+      session?.user?.profileId &&
+      post.authorId === session.user.profileId,
+  );
+
+  const deletePost = async () => {
+    if (!post || !isOwner) {
+      toast.error("You can only delete your own blog posts.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${post.title}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, "blogPosts", post.id));
+      toast.success("Blog post deleted");
+      router.push("/blogger");
+    } catch {
+      toast.error("Could not delete blog post");
+      setDeleting(false);
+    }
+  };
 
   if (!post && !missing) {
     return <BlogDetailSkeleton />;
@@ -107,9 +148,20 @@ export default function BlogDetailPage() {
         <FiArrowLeft className="h-4 w-4" />
         Back
       </button>
+      {isOwner && (
+        <button
+          type="button"
+          onClick={deletePost}
+          disabled={deleting}
+          className="inline-flex items-center gap-2 rounded-full border border-red-500/25 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+        >
+          <FiTrash2 className="h-4 w-4" />
+          {deleting ? "Deleting..." : "Delete article"}
+        </button>
+      )}
 
-      <article className="section-shell overflow-hidden bg-emerald-200/20 rounded-3xl border border-emerald-200">
-        <div className="border-b border-border px-6 py-5">
+      <article className="section-shell overflow-hidden">
+        <div className="border-b border-border px-5 py-6 sm:px-8 sm:py-8">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
               {post.category || "General"}
@@ -119,9 +171,12 @@ export default function BlogDetailPage() {
               <FiEye className="h-3.5 w-3.5" />
               {post.views || 0} views
             </span>
+            <span className="text-xs text-text-muted">
+              {post.readTimeMinutes || 1} min read
+            </span>
           </div>
 
-          <h1 className="mt-5 max-w-4xl text-3xl font-black tracking-tight text-foreground md:text-5xl">
+          <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight tracking-tight text-foreground md:text-5xl">
             {post.title}
           </h1>
           <p className="mt-4 max-w-3xl text-base leading-8 text-text-muted">
@@ -131,8 +186,8 @@ export default function BlogDetailPage() {
         </div>
         
 
-        <div className="grid gap-6 px-6 py-6 lg:grid-cols-[0.75fr_0.25fr]">
-          <div className="space-y-6">
+        <div className="grid gap-6 px-5 py-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <div className="min-w-0 space-y-6">
             {post.codeSnippet?.trim() && (
               <CodeSnippetPreview
                 code={post.codeSnippet}
@@ -147,7 +202,7 @@ export default function BlogDetailPage() {
             />
           </div>
 
-          <aside className="space-y-4">
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <div className="panel-shell space-y-4 p-5">
               <div className="flex items-center gap-3">
                 <img
@@ -171,6 +226,10 @@ export default function BlogDetailPage() {
               <GitHubBadge
                 href={post.authorGithubUrl}
                 username={post.authorGithubUsername}
+              />
+              <DiscordBadge
+                visible={post.authorHasDiscord}
+                username={post.authorDiscordUsername}
               />
               <BloggerBadge visible={post.authorIsBlogger} />
 

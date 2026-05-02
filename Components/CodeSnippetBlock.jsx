@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 const LANGUAGE_LABELS = {
   bash: "Bash",
@@ -662,14 +662,7 @@ export function CodeSnippetEditor({
   placeholder,
   rows = 8,
 }) {
-  const overlayRef = useRef(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!overlayRef.current) return;
-    overlayRef.current.scrollTop = 0;
-    overlayRef.current.scrollLeft = 0;
-  }, [language]);
 
   return (
     <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted/70">
@@ -686,31 +679,15 @@ export function CodeSnippetEditor({
           {copied ? "Copied" : "Copy code"}
         </button>
       </div>
-      {!value && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 px-4 py-3 pr-24 text-sm text-text-muted">
-          {placeholder}
-        </div>
-      )}
-
-      <div
-        ref={overlayRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-auto px-4 py-3"
-      >
-        <HighlightedCode code={value || " "} language={language} />
-      </div>
 
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        onScroll={(event) => {
-          if (!overlayRef.current) return;
-          overlayRef.current.scrollTop = event.currentTarget.scrollTop;
-          overlayRef.current.scrollLeft = event.currentTarget.scrollLeft;
-        }}
+        placeholder={placeholder}
         rows={rows}
         spellCheck={false}
-        className="relative z-10 w-full resize-none bg-transparent px-4 py-3 font-mono text-sm leading-6 text-transparent caret-foreground outline-none selection:bg-primary-500/30"
+        className="block w-full resize-y bg-transparent px-4 py-3 pr-24 font-mono text-sm leading-6 text-foreground caret-foreground outline-none placeholder:text-text-muted selection:bg-primary-500/30"
+        style={{ tabSize: 2 }}
       />
     </div>
   );
