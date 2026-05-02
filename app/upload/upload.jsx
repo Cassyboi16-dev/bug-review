@@ -27,6 +27,8 @@ export default function UploadClient({ session }) {
   const authorImg = session?.user?.image || "/default-avatar.png";
   const authorGithubUrl = session?.user?.githubProfileUrl || "";
   const authorGithubUsername = session?.user?.githubUsername || "";
+  const authorDiscordUsername = session?.user?.discordUsername || "";
+  const authorHasDiscord = session?.user?.linkedProviders?.includes("discord");
   const authorIsBlogger = Boolean(session?.user?.bloggerBadge);
 
   const datestamp = new Date().toLocaleDateString("en-US", {
@@ -162,6 +164,8 @@ export default function UploadClient({ session }) {
                 authorImg,
                 authorGithubUrl,
                 authorGithubUsername,
+                authorDiscordUsername,
+                authorHasDiscord,
                 authorIsBlogger,
                 datestamp,
                 timestamp: new Date().toLocaleTimeString(),
