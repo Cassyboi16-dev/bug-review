@@ -240,19 +240,19 @@ export default function BlogWorkspace({ session }) {
   };
 
   return (
-    <main className="page-shell space-y-8">
-      <section className="hero-shell px-6 py-8 md:px-8 md:py-10">
+    <main className="page-shell space-y-6">
+      <section className="hero-shell px-5 py-6 md:px-7 md:py-7">
         <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <span className="eyebrow">
               <FiPenTool className="h-3.5 w-3.5" />
               Blog workspace
             </span>
-            <div className="space-y-3">
-              <h1 className="max-w-2xl text-3xl font-bold tracking-tight md:text-5xl">
+            <div className="space-y-2">
+              <h1 className="max-w-2xl text-2xl font-semibold tracking-tight md:text-3xl">
                 Welcome to BugReview Blog Workspace
               </h1>
-              <p className="max-w-2xl text-sm leading-7 text-text-muted md:text-base">
+              <p className="max-w-2xl text-sm leading-6 text-text-muted">
                 Draft cleaner posts, attach runnable snippets, and manage your
                 articles from one place without leaving the app.
               </p>
@@ -264,7 +264,7 @@ export default function BlogWorkspace({ session }) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Posts
               </p>
-              <p className="mt-3 text-3xl font-bold text-foreground">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {posts.length}
               </p>
             </div>
@@ -272,7 +272,7 @@ export default function BlogWorkspace({ session }) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                 Status
               </p>
-              <p className="mt-3 text-lg font-semibold text-foreground">
+              <p className="mt-2 text-base font-semibold text-foreground">
                 {canPublish ? "Publisher ready" : "Setup required"}
               </p>
             </div>
@@ -281,17 +281,17 @@ export default function BlogWorkspace({ session }) {
       </section>
 
       {!canPublish && (
-        <section className="section-shell grid gap-6 px-6 py-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="section-shell grid gap-5 px-5 py-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <span className="eyebrow">
               <FiShield className="h-3.5 w-3.5" />
               Publisher setup
             </span>
             <div className="space-y-3">
-              <h2 className="text-2xl font-bold text-foreground">
+              <h2 className="text-xl font-semibold text-foreground">
                 Unlock your blog once and keep writing.
               </h2>
-              <p className="text-sm leading-7 text-text-muted">
+              <p className="text-sm leading-6 text-text-muted">
                 We use your signed-in account as the identity anchor, then store
                 the author details you want attached to published articles.
               </p>
@@ -369,13 +369,13 @@ export default function BlogWorkspace({ session }) {
         </section>
       )}
 
-      <section className="section-shell px-6 py-6">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="section-shell px-5 py-5">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
               Authoring
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-foreground">
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
               Compose your next article
             </h2>
           </div>
@@ -490,13 +490,13 @@ export default function BlogWorkspace({ session }) {
         </div>
       </section>
 
-      <section className="section-shell px-6 py-6">
-        <div className="mb-6 flex items-center justify-between gap-3">
+      <section className="section-shell px-5 py-5">
+        <div className="mb-5 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
               Library
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-foreground">
+            <h2 className="mt-2 text-xl font-semibold text-foreground">
               Your published work
             </h2>
           </div>

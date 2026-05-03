@@ -161,7 +161,7 @@ export default function BlogDetailPage() {
       )}
 
       <article className="section-shell overflow-hidden">
-        <div className="border-b border-border px-5 py-6 sm:px-8 sm:py-8">
+        <div className="border-b border-border px-5 py-5 sm:px-7 sm:py-6">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
               {post.category || "General"}
@@ -176,17 +176,17 @@ export default function BlogDetailPage() {
             </span>
           </div>
 
-          <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight tracking-tight text-foreground md:text-5xl">
+          <h1 className="mt-4 max-w-4xl text-2xl font-semibold leading-snug tracking-tight text-foreground md:text-4xl">
             {post.title}
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-text-muted">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-text-muted">
             {post.summary}
           </p>
           
         </div>
         
 
-        <div className="grid gap-6 px-5 py-6 sm:px-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="grid gap-6 px-5 py-6 sm:px-7 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="min-w-0 space-y-6">
             {post.codeSnippet?.trim() && (
               <CodeSnippetPreview
@@ -246,7 +246,7 @@ export default function BlogDetailPage() {
             </div>
 
             {tags.length > 0 && (
-              <div className="panel-shell p-5">
+              <div className="panel-shell p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
                   Tags
                 </p>
@@ -254,7 +254,7 @@ export default function BlogDetailPage() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-primary-500/20 bg-primary-500/8 px-3 py-1 text-xs font-medium text-primary-500"
+                      className="rounded-full border border-primary-500/20 bg-primary-500/8 px-2.5 py-1 text-[11px] font-medium text-primary-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
                     >
                       #{tag}
                     </span>

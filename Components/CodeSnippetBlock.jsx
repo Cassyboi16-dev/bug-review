@@ -453,12 +453,12 @@ const LANGUAGE_KEYWORDS = {
 };
 
 const TOKEN_CLASSNAMES = {
-  comment: "text-slate-400",
-  function: "text-sky-400",
-  keyword: "text-cyan-300",
-  number: "text-amber-300",
+  comment: "text-[#8b949e]",
+  function: "text-[#d2a8ff]",
+  keyword: "text-[#ff7b72]",
+  number: "text-[#f2cc60]",
   plain: "text-foreground",
-  string: "text-emerald-300",
+  string: "text-[#a5d6ff]",
 };
 
 function escapeRegex(value) {
@@ -622,10 +622,10 @@ export function CodeSnippetPreview({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-border bg-surface-muted/70 ${className}`.trim()}
+      className={`overflow-hidden rounded-lg border border-border bg-surface-muted/70 ${className}`.trim()}
     >
       <div className="flex items-center justify-between border-b border-border px-3 py-2">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">
           Code snippet
         </span>
         <div className="flex items-center gap-2 text-[11px] text-text-muted">
@@ -642,7 +642,7 @@ export function CodeSnippetPreview({
           <button
             type="button"
             onClick={copyCode}
-            className="text-[11px] font-semibold text-primary-500 hover:underline"
+            className="rounded-full border border-primary-500/20 px-2 py-1 text-[11px] font-semibold text-primary-500 transition hover:bg-primary-500/10"
           >
             {copied ? "Copied" : "Copy code"}
           </button>
@@ -665,7 +665,7 @@ export function CodeSnippetEditor({
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-surface-muted/70">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-surface-muted/70">
       <div className="absolute right-3 top-3 z-20">
         <button
           type="button"
@@ -674,7 +674,7 @@ export function CodeSnippetEditor({
             setCopied(true);
             window.setTimeout(() => setCopied(false), 1800);
           }}
-          className="text-[11px] font-semibold text-primary-500 hover:underline"
+          className="rounded-full border border-primary-500/20 px-2 py-1 text-[11px] font-semibold text-primary-500 transition hover:bg-primary-500/10"
         >
           {copied ? "Copied" : "Copy code"}
         </button>

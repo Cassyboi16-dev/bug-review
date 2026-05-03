@@ -8,13 +8,13 @@ const PROVIDERS = {
     icon: FaGithub,
     label: "GitHub",
     className:
-      "border-border bg-surface-muted text-text-muted hover:text-foreground",
+      "border-border bg-surface-muted/80 text-text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:border-primary-500/25 hover:text-foreground",
   },
   discord: {
     icon: FaDiscord,
     label: "Discord",
     className:
-      "border-[#5865F2]/25 bg-[#5865F2]/10 text-[#5865F2] hover:bg-[#5865F2]/15",
+      "border-[#5865F2]/25 bg-[#5865F2]/10 text-[#5865F2] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] hover:bg-[#5865F2]/15",
   },
 };
 
@@ -36,7 +36,7 @@ export default function ProviderBadge({
     </>
   );
 
-  const classes = `inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${config.className} ${className}`.trim();
+  const classes = `inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none transition ${config.className} ${className}`.trim();
 
   if (href) {
     return (
