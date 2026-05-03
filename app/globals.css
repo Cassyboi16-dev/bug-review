@@ -165,7 +165,7 @@ code {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 1.75rem;
+  border-radius: 1.25rem;
   background:
     linear-gradient(135deg, rgba(14, 165, 233, 0.08), transparent 36%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
@@ -178,7 +178,7 @@ code {
 
 .section-shell {
   border: 1px solid var(--border);
-  border-radius: 1.5rem;
+  border-radius: 1.125rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
     var(--card);
@@ -188,7 +188,7 @@ code {
 
 .panel-shell {
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   box-shadow: 0 12px 40px rgba(15, 23, 42, 0.05);
 }
@@ -197,13 +197,13 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.45rem 0.8rem;
+  padding: 0.38rem 0.7rem;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-muted);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -213,10 +213,10 @@ code {
 .textarea {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   color: var(--foreground);
-  padding: 0.9rem 1rem;
+  padding: 0.8rem 0.9rem;
   outline: none;
   transition:
     border-color 0.2s ease,
@@ -317,8 +317,8 @@ code {
 
 .prose-saas {
   color: color-mix(in srgb, var(--foreground) 88%, transparent);
-  font-size: 0.98rem;
-  line-height: 1.8;
+  font-size: 0.93rem;
+  line-height: 1.72;
 }
 
 .prose-saas h1,
@@ -328,7 +328,19 @@ code {
   color: var(--foreground);
   line-height: 1.2;
   margin: 1.4em 0 0.5em;
-  font-weight: 700;
+  font-weight: 650;
+}
+
+.prose-saas h1 {
+  font-size: 1.55rem;
+}
+
+.prose-saas h2 {
+  font-size: 1.28rem;
+}
+
+.prose-saas h3 {
+  font-size: 1.08rem;
 }
 
 .prose-saas p,
@@ -351,11 +363,14 @@ code {
 
 .prose-saas pre {
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: #0d1117;
   color: #c9d1d9;
-  padding: 1rem;
+  padding: 0.9rem;
   overflow-x: auto;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .prose-saas p code,
@@ -367,7 +382,7 @@ code {
 }
 
 .tiptap {
-  min-height: 18rem;
+  min-height: 16rem;
   color: var(--foreground);
   line-height: 1.75;
 }
@@ -392,6 +407,12 @@ code {
   color: #ff7b72;
 }
 
+.hljs-title,
+.hljs-title.function_,
+.hljs-function .hljs-title {
+  color: #d2a8ff;
+}
+
 .hljs-string {
   color: #a5d6ff;
 }
@@ -400,6 +421,26 @@ code {
   color: #8b949e;
 }
 
-.hljs-function {
-  color: #d2a8ff;
+.hljs-number,
+.hljs-literal {
+  color: #f2cc60;
+}
+
+.hljs-attr,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable {
+  color: #79c0ff;
+}
+
+.hljs-built_in,
+.hljs-type,
+.hljs-name,
+.hljs-selector-tag {
+  color: #7ee787;
+}
+
+.hljs-tag,
+.hljs-punctuation {
+  color: #c9d1d9;
 }
