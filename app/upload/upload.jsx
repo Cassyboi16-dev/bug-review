@@ -185,12 +185,12 @@ export default function UploadClient({ session }) {
               );
               setUnlockedAchievements(unlocked);
               setStatus("success");
-              successAudioRef.current?.play("/success.mp3");
+              successAudioRef?.current?.play("/success.mp3");
               resetForm();
               setTimeout(() => setStatus("idle"), 2500);
             } catch {
               setStatus("error");
-              errorAudioRef.current?.play("/buzz.mp3");
+              errorAudioRef?.current?.play("/buzz.mp3");
               setTimeout(() => setStatus("idle"), 2500);
             }
           }}
@@ -439,8 +439,8 @@ export default function UploadClient({ session }) {
         </div>
       </motion.footer>
 
-      <audio ref={successAudioRef} src="/success.mp3" />
-      <audio ref={errorAudioRef} src="/buzz.mp3" />
+      <audio ref={successAudioRef} href="/success.mp3" />
+      <audio ref={errorAudioRef} href="/buzz.mp3" />
 
       {/* ── STATUS OVERLAY ── */}
       <AnimatePresence>
