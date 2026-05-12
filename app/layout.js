@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/Components/Navbar";
 import Footer from "@/Components/Footer";
 import AuthProvider from "@/Components/AuthProvider";
+import BrowserLoadingScreen from "@/Components/BrowserLoadingScreen";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getThemeInitScript } from "@/Components/theme";
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         <template dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         <AuthProvider>
+          <BrowserLoadingScreen />
           <Navbar />
           {children}
           <SpeedInsights />
