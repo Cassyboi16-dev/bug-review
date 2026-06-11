@@ -30,7 +30,7 @@ import {
 import Editor from "@/Components/blog/Editor";
 
 function stripHtml(value = "") {
-    e.preventDefault();
+    
   return value
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
