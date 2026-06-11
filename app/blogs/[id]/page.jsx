@@ -41,6 +41,7 @@ function formatDate(value) {
 }
 
  function BlogDetailSkeleton() {
+   e.preventDefault();
   return (
     <main className="page-shell">
       <div className="section-shell animate-pulse space-y-6 px-6 py-8">
