@@ -148,6 +148,7 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
     onSubmit(trimmed);
     setText("");
   };
+       e.preventDefault();
 
   return (
     <div className="flex gap-2 flex-1 items-center">
