@@ -104,7 +104,7 @@ export default function UploadClient({ session }) {
     { icon: <FcHighPriority /> , title: "No spam", desc: "Avoid duplicate posts, excessive promotion or off-topic content." },
     { icon: <IoConstruct />, title: "Stay constructive", desc: "Focus on solutions. Feedback should help, not discourage." },
   ];
-
+       e.preventDefault();
   return (
     <main className="min-h-dvh bg-background text-foreground flex flex-col">
 
