@@ -75,6 +75,7 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false, avatarSrc, 
     onSubmit(t);
     setText("");
   };
+       e.preventDefault();
   return (
     <div className="flex gap-2.5 items-center">
       {(avatarSrc || avatarSeed) && (
