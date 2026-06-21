@@ -5,6 +5,9 @@ import {
   collection,
   onSnapshot,
   doc,
+  limit,
+  orderBy,
+  query,
   updateDoc,
   arrayUnion,
   arrayRemove,
@@ -148,7 +151,6 @@ function CommentInputBox({ placeholder, onSubmit, autoFocus = false }) {
     onSubmit(trimmed);
     setText("");
   };
-       e.preventDefault();
 
   return (
     <div className="flex gap-2 flex-1 items-center">
@@ -400,7 +402,13 @@ export default function Explore({ session }) {
 
   // ── Live Firestore feed ───────────────────────
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "bugPosts"), (snapshot) => {
+    const feedQuery = query(
+      collection(db, "bugPosts"),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    );
+
+    const unsub = onSnapshot(feedQuery, (snapshot) => {
       const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
       setPosts(data);
     });
@@ -408,7 +416,9 @@ export default function Explore({ session }) {
   }, []);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "users"), (snapshot) => {
+    const profilesQuery = query(collection(db, "users"), limit(25));
+
+    const unsub = onSnapshot(profilesQuery, (snapshot) => {
       setUserProfiles(snapshot.docs.map((docItem) => ({ id: docItem.id, ...docItem.data() })));
     });
     return () => unsub();

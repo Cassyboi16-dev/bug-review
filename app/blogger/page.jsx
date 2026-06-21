@@ -12,6 +12,9 @@ import {
   deleteDoc,
   doc,
   increment,
+  limit,
+  orderBy,
+  query,
   onSnapshot,
   updateDoc,
 } from "firebase/firestore";
@@ -124,7 +127,13 @@ export default function BloggerPage() {
   const [deletingPostId, setDeletingPostId] = useState("");
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "blogPosts"), (snapshot) => {
+    const postsQuery = query(
+      collection(db, "blogPosts"),
+      orderBy("createdAt", "desc"),
+      limit(100),
+    );
+
+    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
       setPosts(
         snapshot.docs
           .map((item) => ({ id: item.id, ...item.data() }))

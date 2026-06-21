@@ -5,7 +5,7 @@ import { TypeAnimation } from "react-type-animation";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { db } from "@/config/firebase.config";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { HiTrendingUp } from "react-icons/hi";
 import {
   FiClock,
@@ -283,7 +283,9 @@ export default function Home() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "bugPosts"));
+        const snapshot = await getDocs(
+          query(collection(db, "bugPosts"), orderBy("createdAt", "desc"), limit(50)),
+        );
         const all = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
         // trending: top 4 by score (min 1 view)
