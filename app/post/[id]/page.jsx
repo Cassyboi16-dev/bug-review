@@ -37,6 +37,7 @@ import GitHubBadge from "@/Components/GitHubBadge";
 import DiscordBadge from "@/Components/DiscordBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
+import { getSignedInUserId, stripUndefined } from "@/lib/client/firestoreWrites";
 
 // ─── Country flag ──────────────────────────────
 const COUNTRY_CODES = {
@@ -261,13 +262,13 @@ export default function PostPage() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const userId   = session?.user?.id || session?.user?.email || "anonymous";
+  const userId   = getSignedInUserId(session);
   const userName = session?.user?.name  || session?.user?.username || "Anonymous";
   const userImg  = session?.user?.image || "";
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
   const userDiscordUsername = session?.user?.discordUsername || "";
-  const userHasDiscord = session?.user?.linkedProviders?.includes("discord");
+  const userHasDiscord = Boolean(session?.user?.linkedProviders?.includes("discord"));
   const userProfileId = session?.user?.profileId || "";
   const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
@@ -287,7 +288,7 @@ export default function PostPage() {
   // Track view once
   useEffect(() => {
     if (!post || viewTracked.current) return;
-    if (!post.viewedBy?.includes(userId)) {
+    if (userId && !post.viewedBy?.includes(userId)) {
       updateDoc(doc(db, "bugPosts", id), { viewedBy: arrayUnion(userId) }).catch(() => {});
     }
     viewTracked.current = true;
@@ -313,15 +314,21 @@ export default function PostPage() {
   const isTrending = viewCount >= 5 && trendingScore >= 5;
 
   // Actions
-  const toggleLike = () =>
-    updateDoc(doc(db, "bugPosts", id), {
+  const toggleLike = () => {
+    if (!userId) return;
+
+    return updateDoc(doc(db, "bugPosts", id), {
       likedBy: liked ? arrayRemove(userId) : arrayUnion(userId),
     });
+  };
 
-  const toggleSave = () =>
-    updateDoc(doc(db, "bugPosts", id), {
+  const toggleSave = () => {
+    if (!userId) return;
+
+    return updateDoc(doc(db, "bugPosts", id), {
       savedBy: saved ? arrayRemove(userId) : arrayUnion(userId),
     });
+  };
 
   const share = async () => {
     const url = window.location.href;
@@ -336,8 +343,10 @@ export default function PostPage() {
   };
 
   const addComment = async (text) => {
+    if (!userId) return;
+
     await updateDoc(doc(db, "bugPosts", id), {
-      comments: arrayUnion({
+      comments: arrayUnion(stripUndefined({
         id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
         parentId: null,
         authorId: userId,
@@ -350,7 +359,7 @@ export default function PostPage() {
         authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
-      }),
+      })),
     });
     if (post.authorId && post.authorId !== userId) {
       await awardUserProgress(userProfileId, { solutionsOfferedCount: 1 });
@@ -358,8 +367,10 @@ export default function PostPage() {
   };
 
   const addReply = async (parentId, text) => {
+    if (!userId) return;
+
     await updateDoc(doc(db, "bugPosts", id), {
-      comments: arrayUnion({
+      comments: arrayUnion(stripUndefined({
         id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
         parentId,
         authorId: userId,
@@ -372,7 +383,7 @@ export default function PostPage() {
         authorIsBlogger: userIsBlogger,
         text,
         createdAt: Date.now(),
-      }),
+      })),
     });
     if (post.authorId && post.authorId !== userId) {
       await awardUserProgress(userProfileId, { solutionsOfferedCount: 1 });

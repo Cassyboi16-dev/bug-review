@@ -32,6 +32,7 @@ import {
 } from "react-icons/fi";
 import { AiFillHeart } from "react-icons/ai";
 import { db } from "@/config/firebase.config";
+import { getSignedInUserId, stripUndefined } from "@/lib/client/firestoreWrites";
 
 const CodeSnippetPreview = dynamic(
   () =>
@@ -112,14 +113,14 @@ function CommentNode({ comment, allComments, currentUserId, onDeleteComment }) {
 
 export default function BloggerPage() {
   const { data: session } = useSession();
-  const userId = session?.user?.id || session?.user?.profileId || "";
+  const userId = getSignedInUserId(session);
   const userName =
     session?.user?.username || session?.user?.name || "Anonymous";
   const userImg = session?.user?.image || "";
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
   const userDiscordUsername = session?.user?.discordUsername || "";
-  const userHasDiscord = session?.user?.linkedProviders?.includes("discord");
+  const userHasDiscord = Boolean(session?.user?.linkedProviders?.includes("discord"));
   const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
   const [posts, setPosts] = useState([]);
@@ -173,7 +174,7 @@ export default function BloggerPage() {
     }
 
     await updateDoc(doc(db, "blogPosts", postId), {
-      comments: arrayUnion({
+      comments: arrayUnion(stripUndefined({
         id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
         text,
         authorId: userId,
@@ -186,7 +187,7 @@ export default function BloggerPage() {
         authorIsBlogger: userIsBlogger,
         parentId: null,
         createdAt: Date.now(),
-      }),
+      })),
     });
 
     toast.success("Comment added");

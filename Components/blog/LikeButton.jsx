@@ -15,12 +15,18 @@ export default function LikeButton({ postId, userId, initialLikes = 0 }) {
 
       const res = await fetch(`/api/blogs/${postId}/like`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ userId }),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Like failed");
+      }
 
-      setLikes((prev) => (data.liked ? prev + 1 : prev - 1));
+      setLikes(data.likes ?? ((prev) => (data.liked ? prev + 1 : prev - 1)));
     } catch {
       console.error("Like failed");
     } finally {

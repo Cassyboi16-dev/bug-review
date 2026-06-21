@@ -36,6 +36,7 @@ import GitHubBadge from "@/Components/GitHubBadge";
 import DiscordBadge from "@/Components/DiscordBadge";
 import BloggerBadge from "@/Components/BloggerBadge";
 import { awardUserProgress } from "@/lib/client/gamification";
+import { getSignedInUserId, stripUndefined } from "@/lib/client/firestoreWrites";
 import { getGamificationSummary } from "@/lib/achievements";
 
 import {
@@ -359,14 +360,14 @@ function CommentNode({
 // MAIN EXPLORE COMPONENT
 // ─────────────────────────────────────────────
 export default function Explore({ session }) {
-  const userId = session?.user?.id || session?.user?.email || "anonymous";
+  const userId = getSignedInUserId(session);
   const userUsername =
     session?.user?.username || session?.user?.name || "Anonymous";
   const userImg = session?.user?.image || "";
   const userGithubUrl = session?.user?.githubProfileUrl || "";
   const userGithubUsername = session?.user?.githubUsername || "";
   const userDiscordUsername = session?.user?.discordUsername || "";
-  const userHasDiscord = session?.user?.linkedProviders?.includes("discord");
+  const userHasDiscord = Boolean(session?.user?.linkedProviders?.includes("discord"));
   const userProfileId = session?.user?.profileId || "";
   const userIsBlogger = Boolean(session?.user?.bloggerBadge);
 
@@ -630,6 +631,11 @@ export default function Explore({ session }) {
 
   // ── Like ──────────────────────────────────────
   const toggleLike = async (post) => {
+    if (!userId) {
+      toast.error("Sign in to like posts");
+      return;
+    }
+
     const ref = doc(db, "bugPosts", post.id);
     const liked = post.likedBy?.includes(userId);
     try {
@@ -647,6 +653,11 @@ export default function Explore({ session }) {
 
   // ── Save ──────────────────────────────────────
   const toggleSave = async (post) => {
+    if (!userId) {
+      toast.error("Sign in to save posts");
+      return;
+    }
+
     const ref = doc(db, "bugPosts", post.id);
     const saved = post.savedBy?.includes(userId);
     await updateDoc(ref, {
@@ -685,20 +696,25 @@ export default function Explore({ session }) {
 
   // ── Comments ──────────────────────────────────
   const addComment = async (postId, text) => {
-    const entry = {
+    if (!userId) {
+      toast.error("Sign in to comment");
+      return;
+    }
+
+    const entry = stripUndefined({
       id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
       parentId: null,
       authorId: userId,
       author: userUsername,
       authorImg: userImg,
-        authorGithubUrl: userGithubUrl,
-        authorGithubUsername: userGithubUsername,
-        authorDiscordUsername: userDiscordUsername,
-        authorHasDiscord: userHasDiscord,
-        authorIsBlogger: userIsBlogger,
+      authorGithubUrl: userGithubUrl,
+      authorGithubUsername: userGithubUsername,
+      authorDiscordUsername: userDiscordUsername,
+      authorHasDiscord: userHasDiscord,
+      authorIsBlogger: userIsBlogger,
       text,
       createdAt: Date.now(),
-    };
+    });
     try {
       await updateDoc(doc(db, "bugPosts", postId), {
         comments: arrayUnion(entry),
@@ -717,20 +733,25 @@ export default function Explore({ session }) {
   };
 
   const addReply = async (postId, parentId, text) => {
-    const entry = {
+    if (!userId) {
+      toast.error("Sign in to reply");
+      return;
+    }
+
+    const entry = stripUndefined({
       id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
       parentId,
       authorId: userId,
       author: userUsername,
       authorImg: userImg,
-        authorGithubUrl: userGithubUrl,
-        authorGithubUsername: userGithubUsername,
-        authorDiscordUsername: userDiscordUsername,
-        authorHasDiscord: userHasDiscord,
-        authorIsBlogger: userIsBlogger,
+      authorGithubUrl: userGithubUrl,
+      authorGithubUsername: userGithubUsername,
+      authorDiscordUsername: userDiscordUsername,
+      authorHasDiscord: userHasDiscord,
+      authorIsBlogger: userIsBlogger,
       text,
       createdAt: Date.now(),
-    };
+    });
     try {
       await updateDoc(doc(db, "bugPosts", postId), {
         comments: arrayUnion(entry),
