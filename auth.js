@@ -111,7 +111,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         profileDoc?.verificationEmail || token.verificationEmail || "";
       session.user.verificationPhone =
         profileDoc?.verificationPhone || token.verificationPhone || "";
-      session.user.activeProvider = token.activeProvider || "";
+      session?.user?.activeProvider = token?.activeProvider || "";
 
       return session;
     },
