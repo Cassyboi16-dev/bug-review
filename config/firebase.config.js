@@ -1,7 +1,7 @@
 // firebase.config.js
 
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -12,24 +12,34 @@ const firebaseConfig = {
   storageBucket: "bugreview-76131.firebasestorage.app",
   messagingSenderId: "624455085191",
   appId: "1:624455085191:web:2eec94eb85ffb9a462dc22",
+  measurementId: "G-XXXXXXXXXX", // Add your real Measurement ID if using Analytics
 };
 
-// ✅ Safe app init
+// Safe app initialization
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// ✅ Core services (safe on server)
+// Core Firebase services
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// ✅ Analytics (client-only)
-let analytics = null;
+// Analytics helper
+export const getFirebaseAnalytics = async () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
 
-if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
+  try {
+    const supported = await isSupported();
+
+    if (!supported) {
+      return null;
     }
-  });
-}
 
-export { analytics };
+    return getAnalytics(app);
+  } catch (error) {
+    console.error("Analytics initialization failed:", error);
+    return null;
+  }
+};
+
+export default app;
