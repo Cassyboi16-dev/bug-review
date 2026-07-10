@@ -12,7 +12,7 @@ const firebaseConfig = {
   storageBucket: "bugreview-76131.firebasestorage.app",
   messagingSenderId: "624455085191",
   appId: "1:624455085191:web:2eec94eb85ffb9a462dc22",
-  measurementId: "G-XXXXXXXXXX", // Add your real Measurement ID if using Analytics
+  measurementId: "G-YZFKLS506V", // Add your real Measurement ID if using Analytics
 };
 
 // Safe app initialization
