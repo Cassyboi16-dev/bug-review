@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -40,7 +40,7 @@ function formatDate(value) {
   }).format(date);
 }
 
- function BlogDetailSkeleton() {
+function BlogDetailSkeleton() {
   return (
     <main className="page-shell">
       <div className="section-shell animate-pulse space-y-6 px-6 py-8">
@@ -59,212 +59,158 @@ export default function BlogDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
-  const [post, setPost] = useState(null);
-  const [missing, setMissing] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const trackedView = useRef(false);
 
-  
-    if (!params?.id) return;
-    trackedView.current = false;
+  const [blog, setBlog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const hasIncrementedRef = useRef(false);
 
-    const reference = doc(db, "blogPosts", params.id);
-    const unsubscribe = onSnapshot(reference, async (snapshot) => {
-      if (!snapshot.exists()) {
-        setMissing(true);
-        setPost(null);
-        return;
-      
+  const blogId = params?.id;
 
-      setMissing(false);
-      const nextPost = { id: snapshot.id, ...snapshot.data() };
-      setPost(nextPost);
+  // Realtime subscription and view count increment
+  useEffect(() => {
+    if (!blogId) return;
 
-      if (!trackedView.current) {
-        trackedView.current = true;
-        updateDoc(reference, { views: increment(1) }).catch(() => {});
-      }
-    });
+    const docRef = doc(db, "blogs", blogId);
 
-    return () => unsubscribe();
-  }, [params?.id]);
-
-  const tags = useMemo(() => post?.tags || [], [post?.tags]);
-  const isOwner = Boolean(
-    post &&
-      session?.user?.profileId &&
-      post.authorId === session.user.profileId,
-  );
-
-  const deletePost = async () => {
-    if (!post || !isOwner) {
-      toast.error("You can only delete your own blog posts.");
-      return;
+    // Increment view count once per session
+    if (!hasIncrementedRef.current) {
+      hasIncrementedRef.current = true;
+      updateDoc(docRef, {
+        views: increment(1),
+      }).catch((err) => {
+        // Silently catch permission errors if views update isn't strictly required
+        console.error("Failed to increment views (check firestore rules):", err);
+      });
     }
 
-    const confirmed = window.confirm(`Delete "${post.title}"? This cannot be undone.`);
-    if (!confirmed) return;
+    // Subscribe to real-time document updates
+    const unsubscribe = onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setBlog({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setBlog(null);
+          toast.error("Blog post not found");
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Firestore read error:", error);
+        toast.error("Permission denied or error fetching post.");
+        setLoading(false);
+      }
+    );
 
-    setDeleting(true);
+    return () => unsubscribe();
+  }, [blogId]);
+
+  // Delete post handler
+  const handleDelete = async () => {
+    if (!blogId || isDeleting) return;
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this blog post?"
+    );
+    if (!confirmDelete) return;
+
+    setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, "blogPosts", post.id));
-      toast.success("Blog post deleted");
-      router.push("/blogger");
-    } catch {
-      toast.error("Could not delete blog post");
-      setDeleting(false);
+      await deleteDoc(doc(db, "blogs", blogId));
+      toast.success("Blog deleted successfully");
+      router.push("/blogs");
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete blog. Ensure you have proper permissions.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  if (!post && !missing) {
+  if (loading) {
     return <BlogDetailSkeleton />;
   }
 
-  if (missing) {
+  if (!blog) {
     return (
-      <main className="page-shell">
-        <section className="section-shell flex flex-col items-center gap-4 px-6 py-16 text-center">
-          <h1 className="text-2xl font-bold text-foreground">
-            Article not found
-          </h1>
-          <p className="max-w-md text-sm leading-7 text-text-muted">
-            This post may have been removed or the link is no longer valid.
-          </p>
-          <Link href="/blog" className="btn-primary">
-            Return to blog workspace
-          </Link>
-        </section>
+      <main className="page-shell px-6 py-12 text-center">
+        <h2 className="text-2xl font-bold">Blog post not found</h2>
+        <p className="mt-2 text-muted">It may have been removed or deleted.</p>
+        <Link
+          href="/blogs"
+          className="mt-4 inline-flex items-center gap-2 text-primary hover:underline"
+        >
+          <FiArrowLeft /> Back to Blogs
+        </Link>
       </main>
     );
   }
 
+  const isAuthor =
+    session?.user?.email &&
+    (blog?.authorEmail === session.user.email ||
+      blog?.authorId === session.user.id);
+
   return (
-    <main className="page-shell space-y-6">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="inline-flex items-center gap-2 text-sm text-text-muted transition hover:text-foreground"
-      >
-        <FiArrowLeft className="h-4 w-4" />
-        Back
-      </button>
-      {isOwner && (
-        <button
-          type="button"
-          onClick={deletePost}
-          disabled={deleting}
-          className="inline-flex items-center gap-2 rounded-full border border-red-500/25 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+    <main className="page-shell px-6 py-8 max-w-4xl mx-auto space-y-6">
+      {/* Top Controls */}
+      <div className="flex items-center justify-between">
+        <Link
+          href="/blogs"
+          className="inline-flex items-center gap-2 text-sm text-muted hover:text-foreground"
         >
-          <FiTrash2 className="h-4 w-4" />
-          {deleting ? "Deleting..." : "Delete article"}
-        </button>
-      )}
+          <FiArrowLeft /> Back to Blogs
+        </Link>
 
-      <article className="section-shell overflow-hidden">
-        <div className="border-b border-border px-5 py-5 sm:px-7 sm:py-6">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-              {post.category || "General"}
-            </span>
+        {isAuthor && (
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="inline-flex items-center gap-2 text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
+          >
+            <FiTrash2 /> {isDeleting ? "Deleting..." : "Delete Post"}
+          </button>
+        )}
+      </div>
 
-            <span className="inline-flex items-center gap-2 text-xs text-text-muted">
-              <FiEye className="h-3.5 w-3.5" />
-              {post.views || 0} views
-            </span>
-            <span className="text-xs text-text-muted">
-              {post.readTimeMinutes || 1} min read
-            </span>
-          </div>
-
-          <h1 className="mt-4 max-w-4xl text-2xl font-semibold leading-snug tracking-tight text-foreground md:text-4xl">
-            {post.title}
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-text-muted">
-            {post.summary}
-          </p>
-          
-        </div>
+      {/* Header Info */}
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">{blog.title}</h1>
         
-
-        <div className="grid gap-6 px-5 py-6 sm:px-7 lg:grid-cols-[minmax(0,1fr)_18rem]">
-          <div className="min-w-0 space-y-6">
-            {post.codeSnippet?.trim() && (
-              <CodeSnippetPreview
-                code={post.codeSnippet}
-                language={post.codeLanguage}
-                className="mb-2"
-              />
-            )}
-
-            <div
-              className="prose-saas"
-              dangerouslySetInnerHTML={{ __html: post.content || "<p></p>" }}
-            />
-          </div>
-
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div className="panel-shell space-y-4 p-5">
-              <div className="flex items-center gap-3">
-                <img
-                  src={
-                    post.authorImg ||
-                    `https://api.dicebear.com/7.x/identicon/svg?seed=${post.author}`
-                  }
-                  alt={post.author || "Author"}
-                  className="h-12 w-12 rounded-2xl border border-border object-cover"
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">
-                    {post.author || "Anonymous"}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    {formatDate(post.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              <GitHubBadge
-                href={post.authorGithubUrl}
-                username={post.authorGithubUsername}
-              />
-              <DiscordBadge
-                visible={post.authorHasDiscord}
-                username={post.authorDiscordUsername}
-              />
-              <BloggerBadge visible={post.authorIsBlogger} />
-
-              {post.authorGithubUrl && (
-                <a
-                  href={post.authorGithubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary-500"
-                >
-                  Author profile <FiExternalLink className="h-4 w-4" />
-                </a>
-              )}
-            </div>
-
-            {tags.length > 0 && (
-              <div className="panel-shell p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
-                  Tags
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full border border-primary-500/20 bg-primary-500/8 px-2.5 py-1 text-[11px] font-medium text-primary-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </aside>
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
+          <span>By {blog.authorName || "Anonymous"}</span>
+          <span>•</span>
+          <span>{formatDate(blog.createdAt)}</span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <FiEye className="w-4 h-4" /> {blog.views || 0} views
+          </span>
         </div>
-      </article>
+
+        {/* Platform Badges */}
+        <div className="flex items-center gap-2 pt-2">
+          {blog.githubUrl && <GitHubBadge url={blog.githubUrl} />}
+          {blog.discordUrl && <DiscordBadge url={blog.discordUrl} />}
+          {blog.bloggerUrl && <BloggerBadge url={blog.bloggerUrl} />}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="prose dark:prose-invert max-w-none pt-4">
+        <p className="whitespace-pre-wrap">{blog.content}</p>
+      </div>
+
+      {/* Optional Code Snippet Section */}
+      {blog.codeSnippet && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-2">Code Snippet</h3>
+          <CodeSnippetPreview
+            code={blog.codeSnippet}
+            language={blog.language || "javascript"}
+          />
+        </div>
+      )}
     </main>
   );
 }
