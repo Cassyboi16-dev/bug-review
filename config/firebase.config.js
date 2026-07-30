@@ -1,23 +1,35 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
+// firebase.config.js
+
 import { getFirestore } from "firebase/firestore";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAfAQpKhtg0CyXCoSFfr1F_RjVMpZuEJc8",
+  authDomain: "bugreview-76131.firebaseapp.com",
+  projectId: "bugreview-76131",
+  storageBucket: "bugreview-76131.firebasestorage.app",
+  messagingSenderId: "624455085191",
+  appId: "1:624455085191:web:2eec94eb85ffb9a462dc22",
 };
 
-// Singleton pattern to prevent re-initializing Firebase on client hydration
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+// ✅ Safe app init
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Firebase services
+// ✅ Core services (safe on server)
 export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 
-export default app;
+// ✅ Analytics (client-only)
+let analytics = null;
+
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+    }
+  });
+}
+
+export { analytics };
