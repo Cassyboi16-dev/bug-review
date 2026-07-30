@@ -64,7 +64,7 @@ export default function BlogDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const trackedView = useRef(false);
 
-  useEffect(() => {
+  
     if (!params?.id) return;
     trackedView.current = false;
 
@@ -74,7 +74,7 @@ export default function BlogDetailPage() {
         setMissing(true);
         setPost(null);
         return;
-      }
+      
 
       setMissing(false);
       const nextPost = { id: snapshot.id, ...snapshot.data() };
