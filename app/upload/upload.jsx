@@ -20,12 +20,17 @@ import toast from "react-hot-toast";
 
 function formatDate(value) {
   if (!value) return "Just now";
-  const date =
-    typeof value?.toDate === "function"
-      ? value.toDate()
-      : new Date(typeof value === "string" ? value : Number(value));
+  
+  let date;
+  if (typeof value?.toDate === "function") {
+    date = value.toDate();
+  } else if (value instanceof Date) {
+    date = value;
+  } else {
+    date = new Date(value);
+  }
 
-  if (Number.isNaN(date.getTime())) return "Just now";
+  if (isNaN(date.getTime())) return "Just now";
 
   return new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -42,30 +47,24 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-
   const hasIncrementedRef = useRef(false);
+
   const postId = params?.id;
 
   useEffect(() => {
     if (!postId) return;
 
-    // TARGETING 'bugPosts' TO MATCH upload.jsx
     const docRef = doc(db, "bugPosts", postId);
 
     // Safely increment view tracking once per visit
     if (!hasIncrementedRef.current) {
       hasIncrementedRef.current = true;
-      const currentUserId = session?.user?.id || "anonymous";
-
-      updateDoc(docRef, {
-        views: increment(1),
-        viewedBy: arrayUnion(currentUserId),
-      }).catch((err) => {
-        console.warn("View counter update skipped/failed:", err.message);
+      updateDoc(docRef, { views: increment(1) }).catch(() => {
+        // Silently ignore view counter update errors
       });
     }
 
-    // Subscribe to document updates
+    // Subscribe to live post updates
     const unsubscribe = onSnapshot(
       docRef,
       (docSnap) => {
@@ -73,150 +72,156 @@ export default function PostDetailPage() {
           setPost({ id: docSnap.id, ...docSnap.data() });
         } else {
           setPost(null);
-          toast.error("Bug report not found");
         }
         setLoading(false);
       },
       (error) => {
-        console.error("Firestore read error:", error);
-        toast.error("Permission denied or error fetching post.");
+        console.error("Error fetching post:", error);
+        toast.error("Failed to load post");
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [postId, session?.user?.id]);
+  }, [postId]);
 
-  const handleLike = async () => {
-    if (!session?.user?.id || !postId) {
+  const userEmail = session?.user?.email;
+  const isLiked = Array.isArray(post?.likes) && userEmail ? post.likes.includes(userEmail) : false;
+  const isAuthor = userEmail && post?.authorEmail === userEmail;
+
+  const handleLikeToggle = async () => {
+    if (!session) {
       toast.error("Please sign in to like posts");
       return;
     }
+    if (!postId) return;
 
     const docRef = doc(db, "bugPosts", postId);
-    const userId = session.user.id;
-    const isLiked = post?.likedBy?.includes(userId);
 
     try {
-      await updateDoc(docRef, {
-        likedBy: isLiked ? arrayRemove(userId) : arrayUnion(userId),
-      });
+      if (isLiked) {
+        await updateDoc(docRef, { likes: arrayRemove(userEmail) });
+      } else {
+        await updateDoc(docRef, { likes: arrayUnion(userEmail) });
+      }
     } catch (err) {
       console.error("Error updating likes:", err);
-      toast.error("Could not update like status.");
+      toast.error("Failed to update like");
     }
   };
 
   const handleDelete = async () => {
-    if (!postId || isDeleting) return;
+    if (!isAuthor || !postId) return;
 
-    if (!window.confirm("Are you sure you want to delete this report?")) return;
+    if (!confirm("Are you sure you want to delete this post?")) return;
 
     setIsDeleting(true);
     try {
       await deleteDoc(doc(db, "bugPosts", postId));
-      toast.success("Report deleted successfully");
+      toast.success("Post deleted successfully");
       router.push("/");
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Failed to delete post. Check permissions.");
-    } finally {
+    } catch (err) {
+      console.error("Error deleting post:", err);
+      toast.error("Failed to delete post");
       setIsDeleting(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8 max-w-4xl mx-auto animate-pulse space-y-4">
-        <div className="h-6 w-32 bg-border rounded" />
-        <div className="h-10 w-3/4 bg-border rounded" />
-        <div className="h-64 bg-border rounded-xl" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <h1 className="text-2xl font-bold mb-2">Report Not Found</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <h2 className="text-xl font-semibold">Post Not Found</h2>
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-primary-500 hover:underline"
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
         >
-          <FiArrowLeft /> Go back
+          <FiArrowLeft /> Go Back
         </button>
       </div>
     );
   }
 
-  const isAuthor =
-    session?.user?.id === post?.authorId ||
-    session?.user?.email === post?.authorEmail;
-  const isLiked = post?.likedBy?.includes(session?.user?.id);
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-foreground"
-        >
-          <FiArrowLeft /> Back
-        </button>
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Back button */}
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 mb-6 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+      >
+        <FiArrowLeft className="w-4 h-4" /> Back
+      </button>
 
-        {isAuthor && (
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2 text-sm text-red-500 hover:text-red-700 disabled:opacity-50"
-          >
-            <FiTrash2 /> {isDeleting ? "Deleting..." : "Delete"}
-          </button>
-        )}
-      </div>
+      <article className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 md:p-8">
+        {/* Header section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              {post.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+              <span className="flex items-center gap-1">
+                <FiClock className="w-4 h-4" /> {formatDate(post.createdAt)}
+              </span>
+              <span className="flex items-center gap-1">
+                <FiEye className="w-4 h-4" /> {post.views || 0} views
+              </span>
+            </div>
+          </div>
 
-      <div className="space-y-3">
-        <h1 className="text-3xl font-extrabold">{post.title}</h1>
-
-        <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
-          <span>By {post.author || "Anonymous"}</span>
-          <span>•</span>
-          <span className="flex items-center gap-1">
-            <FiClock /> {formatDate(post.createdAt || post.datestamp)}
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1">
-            <FiEye /> {post.views || post.viewedBy?.length || 0} views
-          </span>
-        </div>
-      </div>
-
-      <div className="prose dark:prose-invert max-w-none py-4">
-        <p className="whitespace-pre-wrap">{post.description || post.content}</p>
-      </div>
-
-      {post.codeSnippet && (
-        <div className="my-6">
-          <CodeSnippetPreview
-            code={post.codeSnippet}
-            language={post.codeLanguage || "javascript"}
-          />
-        </div>
-      )}
-
-      <div className="flex items-center gap-6 border-t border-border pt-4">
-        <button
-          onClick={handleLike}
-          className="flex items-center gap-2 text-sm font-medium transition-colors"
-        >
-          {isLiked ? (
-            <AiFillHeart className="w-5 h-5 text-red-500" />
-          ) : (
-            <FiHeart className="w-5 h-5 text-text-muted hover:text-red-500" />
+          {/* Delete button (only for author) */}
+          {isAuthor && (
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-900 transition-colors self-start md:self-auto disabled:opacity-50"
+            >
+              <FiTrash2 className="w-4 h-4" />
+              {isDeleting ? "Deleting..." : "Delete Post"}
+            </button>
           )}
-          <span>{post.likedBy?.length || 0} Likes</span>
-        </button>
-      </div>
+        </div>
+
+        {/* Content body */}
+        <div className="prose dark:prose-invert max-w-none mb-6">
+          <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+            {post.description || post.content}
+          </p>
+        </div>
+
+        {/* Code Snippet Preview */}
+        {post.codeSnippet && (
+          <div className="mb-6">
+            <CodeSnippetPreview code={post.codeSnippet} language={post.language || "javascript"} />
+          </div>
+        )}
+
+        {/* Actions bar */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-700">
+          <button
+            onClick={handleLikeToggle}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              isLiked
+                ? "bg-red-50 dark:bg-red-950/40 text-red-600"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+            }`}
+          >
+            {isLiked ? (
+              <AiFillHeart className="w-5 h-5 text-red-500" />
+            ) : (
+              <FiHeart className="w-5 h-5" />
+            )}
+            <span>{post.likes?.length || 0} Likes</span>
+          </button>
+        </div>
+      </article>
     </div>
   );
 }
