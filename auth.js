@@ -71,7 +71,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (!session.user) return session;
+      if (!session.user) {
+        session.user.id = token.sub;
+      } return session;
 
       const profileDoc =
         (token.profileId && (await getUserProfileById(token.profileId))) || null;
