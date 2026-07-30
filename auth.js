@@ -108,9 +108,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         profileDoc?.phoneVerifiedForBlogging ?? token.phoneVerifiedForBlogging,
       );
       session.user.verificationEmail =
-        profileDoc?.verificationEmail || token.verificationEmail || "";
+        profileDoc.verificationEmail || token.verificationEmail || "";
       session.user.verificationPhone =
-        profileDoc?.verificationPhone || token.verificationPhone || "";
+        profileDoc.verificationPhone || token.verificationPhone || "";
       session.user.activeProvider = token.activeProvider || "";
 
       return session;
