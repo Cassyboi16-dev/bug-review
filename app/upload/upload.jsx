@@ -46,27 +46,7 @@ export default function UploadClient({ session }) {
   const successAudioRef = useRef(null);
   const errorAudioRef = useRef(null);
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-            );
-            const data = await response.json();
-            const countryName = data.address?.country;
-            if (countryName) setCountry(countryName);
-          } catch {}
-          finally { setLocationLoading(false); }
-        },
-        () => setLocationLoading(false)
-      );
-    } else {
-      setLocationLoading(false);
-    }
-  }, []);
+  
 
   const autoResize = (e) => {
     const el = e.target;
